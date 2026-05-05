@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Northwind Robotics — HR Handbook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="/static/marked.min.js"></script>
+  <script src="/static/purify.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:      #0f2542;
+      --blue:      #2563eb;
+      --slate-50:  #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-700: #334155;
+      --slate-900: #0f172a;
+      --white:     #ffffff;
+    }
+
+    html, body {
+      min-height: 100%;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--slate-100);
+      color: var(--slate-900);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    header {
+      background: var(--navy);
+      padding: 0 24px;
+      height: 62px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    }
+
+    .logo {
+      width: 34px; height: 34px;
+      background: var(--blue);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      text-decoration: none;
+    }
+    .logo svg { width: 20px; height: 20px; fill: white; }
+
+    .header-text { display: flex; flex-direction: column; }
+    .header-title   { font-size: 15px; font-weight: 700; color: white; letter-spacing: -.01em; }
+    .header-subtitle { font-size: 11px; color: rgba(255,255,255,.5); font-weight: 500; text-transform: uppercase; letter-spacing: .05em; }
+
+    .back-link {
+      margin-left: auto;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,.7);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color .15s;
+    }
+    .back-link:hover { color: white; }
+    .back-link svg { width: 16px; height: 16px; stroke: currentColor; fill: none; }
+
+    main {
+      max-width: 740px;
+      margin: 40px auto;
+      padding: 0 20px 60px;
+    }
+
+    .doc-card {
+      background: var(--white);
+      border-radius: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 20px rgba(0,0,0,.06);
+      padding: 40px 48px;
+    }
+
+    /* ── Markdown styles ── */
+    .doc-card h1 {
+      font-size: 1.6em;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-bottom: .6em;
+      padding-bottom: .4em;
+      border-bottom: 2px solid var(--slate-100);
+    }
+    .doc-card h2 {
+      font-size: 1.15em;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-top: 1.6em;
+      margin-bottom: .4em;
+    }
+    .doc-card h3 {
+      font-size: .95em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--slate-500);
+      margin-top: 1.4em;
+      margin-bottom: .35em;
+    }
+    .doc-card h1:first-child,
+    .doc-card h2:first-child { margin-top: 0; }
+
+    .doc-card p {
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--slate-700);
+      margin-bottom: .85em;
+    }
+    .doc-card p:last-child { margin-bottom: 0; }
+
+    .doc-card strong { font-weight: 650; color: var(--slate-900); }
+    .doc-card em     { font-style: italic; }
+
+    .doc-card ul, .doc-card ol {
+      padding-left: 1.5em;
+      margin-bottom: .85em;
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--slate-700);
+    }
+    .doc-card li { margin-bottom: .3em; }
+
+    .doc-card table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 14px;
+      margin-bottom: 1em;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .doc-card th {
+      background: var(--slate-50);
+      font-weight: 600;
+      color: var(--slate-700);
+      padding: 9px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--slate-200);
+    }
+    .doc-card td {
+      padding: 9px 14px;
+      color: var(--slate-700);
+      border-bottom: 1px solid var(--slate-100);
+    }
+    .doc-card tr:last-child td { border-bottom: none; }
+    .doc-card tr:nth-child(even) td { background: var(--slate-50); }
+
+    .doc-card code {
+      font-family: ui-monospace, 'SF Mono', monospace;
+      font-size: .85em;
+      background: var(--slate-100);
+      border: 1px solid var(--slate-200);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .doc-card pre {
+      background: var(--slate-100);
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      margin-bottom: .85em;
+    }
+    .doc-card pre code { background: none; border: none; padding: 0; }
+
+    .doc-card blockquote {
+      border-left: 3px solid var(--slate-200);
+      padding-left: 16px;
+      color: var(--slate-500);
+      margin-bottom: .85em;
+    }
+
+    .doc-card hr {
+      border: none;
+      border-top: 1px solid var(--slate-200);
+      margin: 1.4em 0;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="/">
+    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+  </a>
+  <div class="header-text">
+    <span class="header-title">Northwind Robotics</span>
+    <span class="header-subtitle">HR Handbook</span>
+  </div>
+  <a class="back-link" href="/">
+    <svg viewBox="0 0 24 24" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
+    </svg>
+    Back to assistant
+  </a>
+</header>
+
+<main>
+  <div class="doc-card" id="content"></div>
+</main>
+
+<script>
+  const raw = `__MARKDOWN__`;
+  document.getElementById('content').innerHTML = DOMPurify.sanitize(marked.parse(raw));
+</script>
+</body>
+</html>

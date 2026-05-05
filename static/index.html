@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Northwind Robotics — HR Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="/static/marked.min.js"></script>
+  <script src="/static/purify.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:       #0f2542;
+      --navy-light: #1a3a5c;
+      --blue:       #2563eb;
+      --blue-dark:  #1d4ed8;
+      --slate-50:   #f8fafc;
+      --slate-100:  #f1f5f9;
+      --slate-200:  #e2e8f0;
+      --slate-400:  #94a3b8;
+      --slate-500:  #64748b;
+      --slate-700:  #334155;
+      --slate-900:  #0f172a;
+      --white:      #ffffff;
+      --radius:     14px;
+      --shadow:     0 1px 4px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--slate-100);
+      color: var(--slate-900);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ── */
+    .layout {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--navy);
+      padding: 0 24px;
+      height: 62px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+      z-index: 10;
+    }
+
+    .logo {
+      width: 34px;
+      height: 34px;
+      background: var(--blue);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo svg { width: 20px; height: 20px; fill: white; }
+
+    .header-text { display: flex; flex-direction: column; }
+    .header-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -.01em;
+    }
+    .header-subtitle {
+      font-size: 11px;
+      color: rgba(255,255,255,.5);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .header-badge {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,.6);
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: .03em;
+    }
+
+    /* ── Message thread ── */
+    .thread {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 0;
+      scroll-behavior: smooth;
+    }
+
+    .thread-inner {
+      max-width: 740px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 64px 24px;
+      text-align: center;
+      color: var(--slate-400);
+    }
+
+    .empty-icon {
+      width: 52px;
+      height: 52px;
+      background: var(--slate-200);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .empty-icon svg { width: 26px; height: 26px; stroke: var(--slate-400); fill: none; }
+
+    .empty-state h2 { font-size: 17px; font-weight: 600; color: var(--slate-700); }
+    .empty-state p  { font-size: 14px; max-width: 340px; line-height: 1.6; }
+
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 4px;
+    }
+
+    .suggestion {
+      font-size: 13px;
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: 20px;
+      padding: 6px 14px;
+      cursor: pointer;
+      color: var(--slate-700);
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .suggestion:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.08);
+    }
+
+    /* ── Messages ── */
+    .message { display: flex; flex-direction: column; gap: 6px; }
+
+    .message.user  { align-items: flex-end; }
+    .message.assistant { align-items: flex-start; }
+
+    .message-meta {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--slate-400);
+      padding: 0 4px;
+    }
+
+    .bubble {
+      max-width: 88%;
+      padding: 13px 17px;
+      border-radius: var(--radius);
+      font-size: 15px;
+      line-height: 1.65;
+      word-break: break-word;
+    }
+
+    .message.user .bubble {
+      background: var(--blue);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.assistant .bubble {
+      background: var(--white);
+      color: var(--slate-900);
+      border-bottom-left-radius: 4px;
+      box-shadow: var(--shadow);
+    }
+
+    /* ── Citations ── */
+    .citations {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 0 4px;
+    }
+
+    .citation-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--slate-400);
+      width: 100%;
+    }
+
+    .citation-pill {
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--slate-100);
+      border: 1px solid var(--slate-200);
+      color: var(--slate-500);
+      padding: 3px 10px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      text-decoration: none;
+      transition: border-color .15s, color .15s, box-shadow .15s;
+    }
+    .citation-pill:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.08);
+    }
+    .citation-pill svg {
+      width: 11px;
+      height: 11px;
+      stroke: var(--slate-400);
+      fill: none;
+      flex-shrink: 0;
+    }
+
+    /* ── Thinking indicator ── */
+    .thinking-bubble {
+      background: var(--white);
+      box-shadow: var(--shadow);
+      padding: 14px 18px;
+      border-radius: var(--radius);
+      border-bottom-left-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 160px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* animated top border sweep */
+    .thinking-bubble::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--blue), transparent);
+      animation: sweep 1.6s ease-in-out infinite;
+    }
+    @keyframes sweep {
+      0%   { left: -100%; }
+      100% { left: 100%; }
+    }
+
+    .thinking-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--slate-400);
+      letter-spacing: .03em;
+      animation: pulse-text 2s ease-in-out infinite;
+    }
+    @keyframes pulse-text {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .5; }
+    }
+
+    .thinking-dots {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+    .dot:nth-child(1) { background: var(--blue);       animation-delay: 0s; }
+    .dot:nth-child(2) { background: var(--slate-300);  animation-delay: .18s; }
+    .dot:nth-child(3) { background: var(--slate-200);  animation-delay: .36s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0) scale(1); }
+      30%            { transform: translateY(-6px) scale(1.15); }
+    }
+
+    .thinking-timer {
+      font-size: 11px;
+      color: var(--slate-400);
+      opacity: 0;
+      transition: opacity .4s;
+    }
+    .thinking-timer.visible { opacity: 1; }
+
+    /* ── Input bar ── */
+    .input-bar {
+      background: var(--white);
+      border-top: 1px solid var(--slate-200);
+      padding: 14px 20px;
+      flex-shrink: 0;
+    }
+
+    .input-inner {
+      max-width: 740px;
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .input-wrap {
+      flex: 1;
+      background: var(--slate-50);
+      border: 1.5px solid var(--slate-200);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .input-wrap:focus-within {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+    }
+
+    #question {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--slate-900);
+      padding: 13px 0;
+      outline: none;
+      resize: none;
+      line-height: 1.5;
+      max-height: 120px;
+    }
+    #question::placeholder { color: var(--slate-400); }
+
+    #send {
+      width: 44px;
+      height: 44px;
+      background: var(--blue);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s, transform .1s;
+    }
+    #send:hover:not(:disabled) { background: var(--blue-dark); }
+    #send:active:not(:disabled) { transform: scale(.95); }
+    #send:disabled { background: var(--slate-200); cursor: not-allowed; }
+    #send svg { width: 18px; height: 18px; fill: white; }
+    #send:disabled svg { fill: var(--slate-400); }
+
+    .input-hint {
+      text-align: center;
+      font-size: 11px;
+      color: var(--slate-400);
+      margin-top: 8px;
+    }
+
+    /* ── Markdown content inside assistant bubbles ── */
+    .bubble.md h1, .bubble.md h2, .bubble.md h3 {
+      font-weight: 700;
+      line-height: 1.3;
+      margin-top: 1em;
+      margin-bottom: .35em;
+      color: var(--slate-900);
+    }
+    .bubble.md h1 { font-size: 1.15em; }
+    .bubble.md h2 { font-size: 1.05em; }
+    .bubble.md h3 { font-size: .95em; text-transform: uppercase; letter-spacing: .04em; }
+    .bubble.md h1:first-child,
+    .bubble.md h2:first-child,
+    .bubble.md h3:first-child { margin-top: 0; }
+
+    .bubble.md p { margin-bottom: .7em; }
+    .bubble.md p:last-child { margin-bottom: 0; }
+
+    .bubble.md strong { font-weight: 650; }
+    .bubble.md em     { font-style: italic; }
+
+    .bubble.md ul, .bubble.md ol {
+      padding-left: 1.4em;
+      margin-bottom: .7em;
+    }
+    .bubble.md li { margin-bottom: .25em; }
+    .bubble.md li:last-child { margin-bottom: 0; }
+
+    .bubble.md code {
+      font-family: ui-monospace, 'SF Mono', monospace;
+      font-size: .85em;
+      background: var(--slate-100);
+      border: 1px solid var(--slate-200);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    .bubble.md pre {
+      background: var(--slate-100);
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      padding: 12px 14px;
+      overflow-x: auto;
+      margin-bottom: .7em;
+    }
+    .bubble.md pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: .85em;
+    }
+
+    .bubble.md blockquote {
+      border-left: 3px solid var(--slate-200);
+      padding-left: 12px;
+      color: var(--slate-500);
+      margin-bottom: .7em;
+    }
+
+    .bubble.md table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: .9em;
+      margin-bottom: .7em;
+    }
+    .bubble.md th, .bubble.md td {
+      border: 1px solid var(--slate-200);
+      padding: 6px 10px;
+      text-align: left;
+    }
+    .bubble.md th {
+      background: var(--slate-50);
+      font-weight: 600;
+    }
+    .bubble.md tr:nth-child(even) td { background: var(--slate-50); }
+
+    .bubble.md hr {
+      border: none;
+      border-top: 1px solid var(--slate-200);
+      margin: .8em 0;
+    }
+
+    /* ── Fade-in animation ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .message { animation: fadeUp .2s ease-out; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    <div class="header-text">
+      <span class="header-title">Northwind Robotics</span>
+      <span class="header-subtitle">HR Assistant</span>
+    </div>
+    <span class="header-badge">Internal Use Only</span>
+  </header>
+
+  <div class="thread" id="thread">
+    <div class="thread-inner" id="thread-inner">
+
+      <div class="empty-state" id="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/>
+          </svg>
+        </div>
+        <h2>Ask about HR policies</h2>
+        <p>Questions are answered using the Northwind Robotics employee handbook. I'll cite my sources.</p>
+        <div class="suggestions">
+          <button class="suggestion">How much PTO do I accrue?</button>
+          <button class="suggestion">What's the parental leave policy?</button>
+          <button class="suggestion">Can I work remotely full-time?</button>
+          <button class="suggestion">How do performance reviews work?</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="input-bar">
+    <div class="input-inner">
+      <div class="input-wrap">
+        <textarea id="question" rows="1" placeholder="Ask a question about HR policies…"></textarea>
+      </div>
+      <button id="send" title="Send">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z"/>
+        </svg>
+      </button>
+    </div>
+    <p class="input-hint">Press Enter to send · Shift+Enter for new line</p>
+  </div>
+
+</div>
+
+<script>
+  const threadInner = document.getElementById('thread-inner');
+  const thread      = document.getElementById('thread');
+  const textarea    = document.getElementById('question');
+  const sendBtn     = document.getElementById('send');
+  const emptyState  = document.getElementById('empty-state');
+
+  function scrollToBottom() {
+    thread.scrollTo({ top: thread.scrollHeight, behavior: 'smooth' });
+  }
+
+  function autoResize() {
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+  }
+
+  function setLoading(on) {
+    sendBtn.disabled = on;
+    textarea.disabled = on;
+  }
+
+  function appendMessage(role, text, citations = []) {
+    if (emptyState) emptyState.style.display = 'none';
+
+    const msg = document.createElement('div');
+    msg.className = `message ${role}`;
+
+    const meta = document.createElement('div');
+    meta.className = 'message-meta';
+    meta.textContent = role === 'user' ? 'You' : 'HR Assistant';
+
+    const bubble = document.createElement('div');
+    bubble.className = role === 'assistant' ? 'bubble md' : 'bubble';
+    if (role === 'assistant') {
+      bubble.innerHTML = DOMPurify.sanitize(marked.parse(text));
+    } else {
+      bubble.textContent = text;
+    }
+
+    msg.appendChild(meta);
+    msg.appendChild(bubble);
+
+    if (role === 'assistant' && citations.length > 0) {
+      const citWrap = document.createElement('div');
+      citWrap.className = 'citations';
+
+      const label = document.createElement('span');
+      label.className = 'citation-label';
+      label.textContent = 'Sources';
+      citWrap.appendChild(label);
+
+      citations.forEach(c => {
+        const pill = document.createElement('a');
+        pill.className = 'citation-pill';
+        pill.href = `/docs/${c.source}`;
+        pill.target = '_blank';
+        pill.rel = 'noopener noreferrer';
+        pill.innerHTML = `
+          <svg viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+          </svg>
+          ${c.source}`;
+        citWrap.appendChild(pill);
+      });
+
+      msg.appendChild(citWrap);
+    }
+
+    threadInner.appendChild(msg);
+    scrollToBottom();
+    return msg;
+  }
+
+  function appendTyping() {
+    const msg = document.createElement('div');
+    msg.className = 'message assistant';
+    msg.id = 'typing';
+
+    const meta = document.createElement('div');
+    meta.className = 'message-meta';
+    meta.textContent = 'HR Assistant';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'thinking-bubble';
+    bubble.innerHTML = `
+      <span class="thinking-label">Thinking…</span>
+      <div class="thinking-dots">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+      <span class="thinking-timer" id="thinking-timer"></span>`;
+
+    msg.appendChild(meta);
+    msg.appendChild(bubble);
+    threadInner.appendChild(msg);
+    scrollToBottom();
+
+    // elapsed-time counter — appears after 3 s
+    const timerEl = bubble.querySelector('#thinking-timer');
+    const start = Date.now();
+    const interval = setInterval(() => {
+      const s = ((Date.now() - start) / 1000).toFixed(0);
+      timerEl.textContent = `${s}s elapsed`;
+      timerEl.classList.add('visible');
+    }, 1000);
+    msg._stopTimer = () => clearInterval(interval);
+
+    return msg;
+  }
+
+  async function ask(question) {
+    appendMessage('user', question);
+    const typingEl = appendTyping();
+    setLoading(true);
+
+    try {
+      const res = await fetch('/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `Server error ${res.status}`);
+      }
+
+      const data = await res.json();
+      typingEl._stopTimer?.();
+      typingEl.remove();
+      appendMessage('assistant', data.answer, data.citations || []);
+    } catch (err) {
+      typingEl._stopTimer?.();
+      typingEl.remove();
+      appendMessage('assistant', `Sorry, something went wrong: ${err.message}`);
+    } finally {
+      setLoading(false);
+      textarea.focus();
+    }
+  }
+
+  function submit() {
+    const q = textarea.value.trim();
+    if (!q) return;
+    textarea.value = '';
+    textarea.style.height = 'auto';
+    ask(q);
+  }
+
+  textarea.addEventListener('input', autoResize);
+
+  textarea.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submit();
+    }
+  });
+
+  sendBtn.addEventListener('click', submit);
+
+  document.querySelectorAll('.suggestion').forEach(btn => {
+    btn.addEventListener('click', () => {
+      textarea.value = btn.textContent;
+      autoResize();
+      submit();
+    });
+  });
+
+  textarea.focus();
+</script>
+</body>
+</html>

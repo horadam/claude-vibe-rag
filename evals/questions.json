@@ -1,0 +1,90 @@
+[
+  {
+    "id": "pto_accrual_rate",
+    "question": "How much PTO do employees accrue per month?",
+    "must_contain": ["1.5 days"],
+    "must_not_contain": [],
+    "category": "single_doc",
+    "rubric": "Answer must state that full-time employees accrue 1.5 days of PTO per month (18 days per year)."
+  },
+  {
+    "id": "pip_duration",
+    "question": "How long does a Performance Improvement Plan run?",
+    "must_contain": ["60 days"],
+    "must_not_contain": [],
+    "category": "single_doc",
+    "rubric": "Answer must state that a PIP runs for 60 days and should mention check-ins or review milestones."
+  },
+  {
+    "id": "home_office_stipend",
+    "question": "What is the one-time home office stipend amount for remote employees?",
+    "must_contain": ["750"],
+    "must_not_contain": [],
+    "category": "single_doc",
+    "rubric": "Answer must state the stipend is $750, one-time, for new remote-eligible employees."
+  },
+  {
+    "id": "company_holidays",
+    "question": "How many company holidays does Northwind Robotics observe each year?",
+    "must_contain": ["11"],
+    "must_not_contain": [],
+    "category": "single_doc",
+    "rubric": "Answer must state 11 company holidays per year and clarify they are separate from PTO."
+  },
+  {
+    "id": "open_enrollment_timing",
+    "question": "When does open enrollment for health benefits take place?",
+    "must_contain": ["november"],
+    "must_not_contain": [],
+    "category": "single_doc",
+    "rubric": "Answer must state open enrollment occurs in November for coverage beginning January 1."
+  },
+  {
+    "id": "parental_leave_max_with_pto",
+    "question": "What is the maximum total paid leave period available to a primary caregiver, including any PTO top-up?",
+    "must_contain": ["26 weeks"],
+    "must_not_contain": [],
+    "category": "multi_doc",
+    "rubric": "Answer must state the base entitlement is 16 weeks and that PTO top-up can extend it to a maximum of 26 weeks total."
+  },
+  {
+    "id": "remote_security_requirements",
+    "question": "What device and network security rules must remote employees follow?",
+    "must_contain": ["vpn", "company-issued"],
+    "must_not_contain": [],
+    "category": "multi_doc",
+    "rubric": "Answer must cover both device requirements (company-issued devices only, full-disk encryption) and network requirements (VPN required for internal systems, no public Wi-Fi without VPN)."
+  },
+  {
+    "id": "leave_notice_ambiguous",
+    "question": "How much advance notice is required when an employee wants to take leave?",
+    "must_contain": ["2 business days", "8 weeks"],
+    "must_not_contain": [],
+    "category": "ambiguous",
+    "rubric": "Answer must distinguish between PTO leave (2–10 business days depending on duration) and parental leave (8 weeks notice required). A response that only addresses one type without acknowledging the other is incomplete."
+  },
+  {
+    "id": "leave_types_ambiguous",
+    "question": "What types of leave does Northwind Robotics offer employees?",
+    "must_contain": ["pto", "parental"],
+    "must_not_contain": [],
+    "category": "ambiguous",
+    "rubric": "Answer must mention both PTO/vacation leave and parental leave. Ideally also mentions the distinction between the two."
+  },
+  {
+    "id": "out_of_scope_ticker",
+    "question": "What is Northwind Robotics' stock ticker symbol?",
+    "must_contain": ["don't have", "handbook"],
+    "must_not_contain": [],
+    "category": "out_of_scope",
+    "rubric": "Answer must refuse to speculate and state that the information is not available in the handbook."
+  },
+  {
+    "id": "out_of_scope_headcount",
+    "question": "How many employees does Northwind Robotics have?",
+    "must_contain": ["don't have", "handbook"],
+    "must_not_contain": [],
+    "category": "out_of_scope",
+    "rubric": "Answer must refuse to speculate and state that the information is not available in the handbook."
+  }
+]
