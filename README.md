@@ -8,7 +8,9 @@ evaluate — plus a polished chat UI.
 
 ---
 
-<!-- Drop a screen recording here -->
+### Demo
+
+https://github.com/user-attachments/assets/f429311e-7f50-4b9b-ade0-ab9aa5efac46
 
 ---
 
