@@ -1,150 +1,190 @@
-"""Eval harness: runs all questions through /ask and reports pass rates."""
+"""Eval harness CLI: run the question set through the pipeline and report.
 
-import json
-import sys
-from collections import defaultdict
-from pathlib import Path
-
-import httpx
-import anthropic
-from src.config import ANTHROPIC_API_KEY, GENERATION_MODEL
-
-API_URL = "http://localhost:8000/ask"
-QUESTIONS_FILE = Path("evals/questions.json")
-TIMEOUT = 60.0
-
-GRADER_PROMPT = """\
-You are an impartial evaluator for an HR chatbot. You will be given a question, \
-an evaluation rubric, and the chatbot's answer. Judge whether the answer satisfies \
-the rubric.
-
-Respond with JSON only, no markdown fences:
-{"result": "PASS" or "FAIL", "reason": "<one sentence>"}
-
-Be strict: if the rubric requires specific facts or distinctions and the answer \
-omits them, return FAIL.\
+Runs in-process (no server needed). Every run is saved to evals/runs/ and a
+full, unfiltered run also rewrites evals/results.md.
 """
 
-_anthropic = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+import argparse
+import json
+import logging
+import sys
+from pathlib import Path
+
+from src.config import (
+    CHUNK_OVERLAP_TOKENS,
+    CHUNK_TARGET_TOKENS,
+    EMBEDDING_MODEL,
+    EVAL_QUESTIONS_FILE,
+    EVAL_RESULTS_FILE,
+    EVAL_RUNS_DIR,
+    GENERATION_MODEL,
+    JUDGE_MODEL,
+    TOP_K,
+    require_env,
+)
+from src.evaluation.dataset import dataset_fingerprint, load_cases
+from src.evaluation.report import (
+    build_run_record,
+    compare_runs,
+    render_markdown,
+    save_run,
+)
+from src.evaluation.runner import CaseResult, run_eval
 
 
-def keyword_check(answer: str, must_contain: list[str], must_not_contain: list[str]) -> tuple[bool, list[str]]:
-    """Return (passed, list_of_failures) for keyword containment checks."""
-    lower = answer.lower()
-    failures: list[str] = []
-    for phrase in must_contain:
-        if phrase.lower() not in lower:
-            failures.append(f"missing: {phrase!r}")
-    for phrase in must_not_contain:
-        if phrase.lower() in lower:
-            failures.append(f"found forbidden: {phrase!r}")
-    return len(failures) == 0, failures
+def parse_args(argv: list[str]) -> argparse.Namespace:
+    """Define and parse the command-line options."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--judge", "--model-grade", action="store_true", dest="judge",
+                        help="also grade correctness and groundedness with the judge model")
+    parser.add_argument("--retrieval-only", action="store_true",
+                        help="score retrieval only; no generation (embedding calls only)")
+    parser.add_argument("--k", type=int, default=TOP_K, help=f"chunks to retrieve (default {TOP_K})")
+    parser.add_argument("--ids", help="comma-separated case ids to run")
+    parser.add_argument("--category", help="run only this category")
+    parser.add_argument("--label", help="short name added to the run id, e.g. k3")
+    parser.add_argument("--compare", metavar="RUN",
+                        help="run file to diff against, or 'latest' for the previous run")
+    parser.add_argument("--no-save", action="store_true", help="don't write run files")
+    args = parser.parse_args(argv)
+    if args.judge and args.retrieval_only:
+        parser.error("--judge needs generated answers; drop --retrieval-only")
+    return args
 
 
-def model_grade(question: str, rubric: str, answer: str) -> tuple[bool, str]:
-    """Ask Claude to judge the answer against the rubric. Returns (passed, reason)."""
-    user_message = f"QUESTION: {question}\n\nRUBRIC: {rubric}\n\nANSWER: {answer}"
-    message = _anthropic.messages.create(
-        model=GENERATION_MODEL,
-        max_tokens=256,
-        system=GRADER_PROMPT,
-        messages=[{"role": "user", "content": user_message}],
-    )
-    raw = message.content[0].text.strip()
+def _verdict(result: CaseResult) -> str:
+    """Short status label for the progress line."""
+    if result.error:
+        return "ERROR"
+    if result.passed is None:
+        return "RETR " if result.retrieval is None or result.retrieval.recall == 1 else "MISS "
+    return "PASS " if result.passed else "FAIL "
+
+
+def print_case(result: CaseResult) -> None:
+    """Print one progress line, plus details for anything that went wrong."""
+    parts = [f"[{_verdict(result)}] {result.id} ({result.category})"]
+    if result.retrieval:
+        r = result.retrieval
+        parts.append(f"recall {r.recall:.2f} rr {r.reciprocal_rank:.2f}")
+    if result.judge:
+        parts.append(f"judge {result.judge.correct}/{result.judge.grounded}")
+    if result.generate_ms is not None:
+        parts.append(f"{(result.retrieve_ms + result.generate_ms) / 1000:.1f}s")
+    print("  ".join(parts))
+
+    if result.error:
+        print(f"        error:   {result.error}")
+        return
+    if result.retrieval and result.retrieval.missing_sources:
+        print(f"        missing: {', '.join(result.retrieval.missing_sources)}")
+    if result.keyword and not result.keyword.passed:
+        for failure in result.keyword.failures:
+            print(f"        keyword: {failure}")
+    if result.refusal_ok is False:
+        print(f"        refusal: {'refused an answerable question' if result.refused else 'should have refused'}")
+    if result.judge and result.judge.correct != "PASS":
+        print(f"        correct: {result.judge.correct_reason}")
+    if result.judge and result.judge.grounded != "PASS":
+        print(f"        grounded:{result.judge.grounded_reason}")
+    if result.answer and (result.passed is False or (result.judge and result.judge.correct != "PASS")):
+        print(f"        answer:  {result.answer[:300]}")
+
+
+def _latest_run(runs_dir: Path) -> Path | None:
+    """Most recent saved run file, by name (run ids sort by time)."""
+    runs = sorted(runs_dir.glob("*.json"))
+    return runs[-1] if runs else None
+
+
+def main(argv: list[str]) -> int:
+    """Run the eval and return the process exit code."""
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s — %(message)s")
+    args = parse_args(argv)
+
+    cases = load_cases(EVAL_QUESTIONS_FILE)
+    if args.ids:
+        wanted = {i.strip() for i in args.ids.split(",")}
+        unknown = wanted - {c.id for c in cases}
+        if unknown:
+            print(f"Unknown case ids: {', '.join(sorted(unknown))}")
+            return 2
+        cases = [c for c in cases if c.id in wanted]
+    if args.category:
+        cases = [c for c in cases if c.category == args.category]
+    if not cases:
+        print("No cases selected.")
+        return 2
+    filtered = bool(args.ids or args.category)
+
+    baseline_path: Path | None = None
+    if args.compare == "latest":
+        baseline_path = _latest_run(EVAL_RUNS_DIR)
+        if baseline_path is None:
+            print("No previous run to compare with.")
+    elif args.compare:
+        baseline_path = Path(args.compare)
+
+    # Fail once, up front, instead of once per case.
+    needed = ["OPENAI_API_KEY"] + ([] if args.retrieval_only else ["ANTHROPIC_API_KEY"])
     try:
-        parsed = json.loads(raw)
-        passed = parsed["result"].upper() == "PASS"
-        reason = parsed.get("reason", "")
-    except Exception:
-        passed = False
-        reason = f"grader returned unparseable response: {raw[:100]}"
-    return passed, reason
+        for name in needed:
+            require_env(name)
+    except RuntimeError as exc:
+        print(exc)
+        return 2
 
+    # Imported here so --help and dataset errors don't need the pipeline.
+    from src.retrieve import retrieve
+    generate_fn = judge_fn = None
+    if not args.retrieval_only:
+        from src.generate import generate
+        generate_fn = generate
+    if args.judge:
+        from src.evaluation.judge import judge
+        judge_fn = judge
 
-def main() -> None:
-    args = sys.argv[1:]
-    use_model_grader = "--model-grade" in args
-
-    questions = json.loads(QUESTIONS_FILE.read_text())
-
-    kw_passed = kw_failed = 0
-    mg_passed = mg_failed = 0
-    by_category: dict[str, dict[str, int]] = defaultdict(lambda: {"kw_pass": 0, "kw_fail": 0, "mg_pass": 0, "mg_fail": 0})
-
-    mode = "keyword + model-graded" if use_model_grader else "keyword"
-    print(f"Running {len(questions)} questions against {API_URL} [{mode}]\n")
+    mode = "retrieval-only" if args.retrieval_only else ("judged" if args.judge else "answers")
+    print(f"Running {len(cases)} cases [{mode}, k={args.k}]\n" + "=" * 70)
+    results = run_eval(cases, retrieve, generate_fn, judge_fn, args.k, on_result=print_case)
     print("=" * 70)
 
-    for q in questions:
-        qid = q["id"]
-        category = q["category"]
+    config = {
+        "mode": mode,
+        "top_k": args.k,
+        "generation_model": None if args.retrieval_only else GENERATION_MODEL,
+        "judge_model": JUDGE_MODEL if args.judge else None,
+        "embedding_model": EMBEDDING_MODEL,
+        "chunk_target_tokens": CHUNK_TARGET_TOKENS,
+        "chunk_overlap_tokens": CHUNK_OVERLAP_TOKENS,
+        "dataset_sha": dataset_fingerprint(EVAL_QUESTIONS_FILE),
+        "filters": {"ids": args.ids, "category": args.category},
+    }
+    record = build_run_record(results, config, args.label)
 
-        try:
-            response = httpx.post(
-                API_URL,
-                json={"question": q["question"]},
-                timeout=TIMEOUT,
-            )
-            response.raise_for_status()
-            answer = response.json()["answer"]
-        except Exception as exc:
-            print(f"[ERROR] {qid}: {exc}")
-            kw_failed += 1
-            by_category[category]["kw_fail"] += 1
-            continue
+    # The summary printed here is the same markdown written to results.md.
+    print(render_markdown(record))
 
-        kw_ok, kw_failures = keyword_check(answer, q["must_contain"], q["must_not_contain"])
+    if baseline_path is not None:
+        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+        print("\n".join(compare_runs(baseline, record)) + "\n")
 
-        kw_label = "PASS" if kw_ok else "FAIL"
-        if kw_ok:
-            kw_passed += 1
-            by_category[category]["kw_pass"] += 1
-        else:
-            kw_failed += 1
-            by_category[category]["kw_fail"] += 1
+    if not args.no_save:
+        run_path = save_run(record, EVAL_RUNS_DIR)
+        print(f"Saved run to {run_path}")
+        if not filtered and not args.retrieval_only:
+            EVAL_RESULTS_FILE.write_text(render_markdown(record), encoding="utf-8")
+            print(f"Updated {EVAL_RESULTS_FILE}")
 
-        if use_model_grader:
-            mg_ok, mg_reason = model_grade(q["question"], q["rubric"], answer)
-            mg_label = "PASS" if mg_ok else "FAIL"
-            if mg_ok:
-                mg_passed += 1
-                by_category[category]["mg_pass"] += 1
-            else:
-                mg_failed += 1
-                by_category[category]["mg_fail"] += 1
-            print(f"[KW:{kw_label} MG:{mg_label}]  {qid} ({category})")
-        else:
-            print(f"[{kw_label}]  {qid} ({category})")
-
-        if not kw_ok:
-            for f in kw_failures:
-                print(f"        keyword: {f}")
-
-        if use_model_grader and not mg_ok:
-            print(f"        model:   {mg_reason}")
-
-        if not kw_ok or (use_model_grader and not mg_ok):
-            print(f"        answer:  {answer[:300]}")
-
-    total = kw_passed + kw_failed
-    print("=" * 70)
-    print(f"\nKeyword:  {kw_passed}/{total} passed ({100 * kw_passed // total}%)")
-    if use_model_grader:
-        mg_total = mg_passed + mg_failed
-        print(f"Model:    {mg_passed}/{mg_total} passed ({100 * mg_passed // mg_total}%)")
-
-    print("\nBy category:")
-    for cat, counts in sorted(by_category.items()):
-        kw_total = counts["kw_pass"] + counts["kw_fail"]
-        row = f"  {cat:<22} keyword {counts['kw_pass']}/{kw_total}"
-        if use_model_grader:
-            mg_total = counts["mg_pass"] + counts["mg_fail"]
-            row += f"   model {counts['mg_pass']}/{mg_total}"
-        print(row)
-
-    if kw_failed or (use_model_grader and mg_failed):
-        sys.exit(1)
+    failed = any(r.error or r.passed is False for r in results)
+    failed |= any(
+        r.judge is not None and (r.judge.correct != "PASS" or r.judge.grounded != "PASS")
+        for r in results
+    )
+    if args.retrieval_only:
+        failed |= any(r.retrieval and r.retrieval.recall < 1 for r in results)
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main(sys.argv[1:]))

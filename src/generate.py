@@ -2,13 +2,18 @@
 
 import logging
 from dataclasses import dataclass
+from functools import cache
 
 import anthropic
 
-from src.config import ANTHROPIC_API_KEY, GENERATION_MODEL
+from src.config import GENERATION_MODEL, require_env
 from src.retrieve import RetrievedChunk
 
-SYSTEM_PROMPT = """\
+# The exact sentence the model must use when the handbook has no answer.
+# The eval detects refusals by looking for it, so keep both in sync here.
+REFUSAL_MESSAGE = "I don't have that information in the handbook."
+
+SYSTEM_PROMPT = f"""\
 You are the HR assistant for Northwind Robotics. Answer the employee's question \
 using ONLY the context excerpts provided below. Do not use any outside knowledge.
 
@@ -18,7 +23,7 @@ filename(s) in parentheses, e.g. (pto_policy.md).
 2. If the answer requires combining information from multiple excerpts, do so and \
 cite all relevant sources.
 3. If the answer is not found in the provided context, respond with exactly: \
-"I don't have that information in the handbook."
+"{REFUSAL_MESSAGE}"
 4. Never speculate or infer beyond what the context explicitly states.\
 """
 
@@ -26,7 +31,11 @@ _CHUNK_PREVIEW_CHARS = 120
 
 logger = logging.getLogger(__name__)
 
-_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+
+@cache
+def _client() -> anthropic.Anthropic:
+    """Return the shared Anthropic client, created on first use."""
+    return anthropic.Anthropic(api_key=require_env("ANTHROPIC_API_KEY"))
 
 
 @dataclass
@@ -39,9 +48,12 @@ class Citation:
 class GenerationResult:
     answer: str
     citations: list[Citation]
+    model: str = GENERATION_MODEL
+    input_tokens: int = 0
+    output_tokens: int = 0
 
 
-def _build_context_block(chunks: list[RetrievedChunk]) -> str:
+def build_context_block(chunks: list[RetrievedChunk]) -> str:
     """Format retrieved chunks into the CONTEXT section of the user message."""
     parts: list[str] = []
     for chunk in chunks:
@@ -51,11 +63,11 @@ def _build_context_block(chunks: list[RetrievedChunk]) -> str:
 
 def generate(question: str, chunks: list[RetrievedChunk]) -> GenerationResult:
     """Assemble the prompt, call Claude, and return the answer with citations."""
-    context_block = _build_context_block(chunks)
+    context_block = build_context_block(chunks)
     user_message = f"CONTEXT:\n{context_block}\n\nQUESTION: {question}"
 
     logger.info("calling %s with %d context chunks", GENERATION_MODEL, len(chunks))
-    message = _client.messages.create(
+    message = _client().messages.create(
         model=GENERATION_MODEL,
         max_tokens=1024,
         system=SYSTEM_PROMPT,
@@ -79,4 +91,10 @@ def generate(question: str, chunks: list[RetrievedChunk]) -> GenerationResult:
             preview = chunk.text[:_CHUNK_PREVIEW_CHARS].replace("\n", " ")
             citations.append(Citation(source=chunk.source, chunk_preview=preview))
 
-    return GenerationResult(answer=answer, citations=citations)
+    return GenerationResult(
+        answer=answer,
+        citations=citations,
+        model=message.model,
+        input_tokens=usage.input_tokens,
+        output_tokens=usage.output_tokens,
+    )

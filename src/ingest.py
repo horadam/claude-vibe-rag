@@ -1,6 +1,7 @@
 """Chunking, embedding, and Chroma upsert for the HR handbook corpus."""
 
 import logging
+from functools import cache
 from pathlib import Path
 
 import tiktoken
@@ -9,7 +10,6 @@ from openai import OpenAI
 import chromadb
 
 from src.config import (
-    ANTHROPIC_API_KEY,
     CHROMA_DIR,
     CHUNK_OVERLAP_TOKENS,
     CHUNK_TARGET_TOKENS,
@@ -17,14 +17,19 @@ from src.config import (
     CORPUS_DIR,
     EMBED_BATCH_SIZE,
     EMBEDDING_MODEL,
-    OPENAI_API_KEY,
     TIKTOKEN_ENCODING,
+    require_env,
 )
 
 logger = logging.getLogger(__name__)
 
-_openai = OpenAI(api_key=OPENAI_API_KEY)
 _encoding = tiktoken.get_encoding(TIKTOKEN_ENCODING)
+
+
+@cache
+def _openai() -> OpenAI:
+    """Return the shared OpenAI client, created on first use."""
+    return OpenAI(api_key=require_env("OPENAI_API_KEY"))
 
 
 def _token_count(text: str) -> int:
@@ -80,7 +85,7 @@ def chunk_document(text: str) -> list[str]:
 
 def _embed_batch(texts: list[str]) -> list[list[float]]:
     """Embed a batch of texts using the configured OpenAI model."""
-    response = _openai.embeddings.create(model=EMBEDDING_MODEL, input=texts)
+    response = _openai().embeddings.create(model=EMBEDDING_MODEL, input=texts)
     return [item.embedding for item in response.data]
 
 

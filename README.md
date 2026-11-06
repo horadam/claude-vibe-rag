@@ -16,7 +16,7 @@ https://github.com/user-attachments/assets/f429311e-7f50-4b9b-ade0-ab9aa5efac46
 
 ## Setup
 
-**Prerequisites:** Python 3.11+, [uv](https://docs.astral.sh/uv/)
+**Prerequisites:** Python 3.11–3.14 (pinned to 3.13 in `.python-version`; chromadb's onnxruntime has no 3.15 wheels yet), [uv](https://docs.astral.sh/uv/)
 
 ```bash
 git clone <repo>
@@ -70,16 +70,31 @@ curl -s localhost:8000/health | python3 -m json.tool
 
 ### 4. Run the eval harness
 
-Keyword checks only (fast, free):
+The harness runs every question in `evals/questions.json` through the pipeline
+in-process, so the server doesn't need to be running.
 
 ```bash
-uv run python eval_cli.py
+uv run python eval_cli.py                    # retrieval + answer checks
+uv run python eval_cli.py --judge            # add model-graded correctness and groundedness
+uv run python eval_cli.py --retrieval-only   # retrieval metrics only (embedding calls, no Claude)
+uv run python eval_cli.py --k 3 --label k3 --compare latest   # try a change, diff against last run
+uv run python eval_cli.py --ids pip_duration,out_of_scope_ticker
 ```
 
-Keyword + model-graded (Claude judges each answer against a rubric):
+Each run is saved to `evals/runs/<run-id>.json` (gitignored) with its config,
+git commit and per-case detail. A full, unfiltered run also rewrites
+[`evals/results.md`](evals/results.md). The exit code is non-zero when any case
+fails, so it can gate CI.
+
+What gets measured, and why, is explained in
+[docs/FEATURES.md](docs/FEATURES.md).
+
+### 5. Run the unit tests
+
+Offline, no API keys needed:
 
 ```bash
-uv run python eval_cli.py --model-grade
+uv run python -m unittest
 ```
 
 ---
@@ -90,8 +105,10 @@ uv run python eval_cli.py --model-grade
 corpus/          10 fictional Northwind Robotics HR policy docs
 evals/           Eval question set with keyword and rubric checks
 static/
-  index.html     Chat UI
-  doc.html       Rendered handbook page (linked from citations)
+  index.html     Chat UI with the answer inspector
+  doc.html       Rendered handbook page; highlights a cited passage
+  evals.html     Eval results: metrics, run comparison, per-case detail
+  app.css        Shared light/dark theme tokens and header
   marked.min.js  Markdown renderer (vendored)
   purify.min.js  HTML sanitiser (vendored)
 src/
@@ -100,8 +117,11 @@ src/
   retrieve.py    Query embedding + vector search
   generate.py    Prompt assembly + Claude call
   server.py      FastAPI app
+  evaluation/    Eval harness: dataset, scoring, judge, runner, report
+tests/           Offline unit tests
+docs/FEATURES.md How each feature works, in plain language
 ingest_cli.py    CLI entry point for ingestion
-eval_cli.py      Eval harness
+eval_cli.py      Eval harness CLI
 chroma_db/       Local vector store (gitignored, created on first ingest)
 ```
 
@@ -120,10 +140,15 @@ chroma_db/       Local vector store (gitignored, created on first ingest)
    `claude-sonnet-4-6` with a system prompt that requires grounded answers and
    source citations.
 
-4. **UI** — A single-page chat interface served by FastAPI. Answers render as
-   markdown. Citation pills link to fully rendered handbook pages at
-   `GET /docs/{filename}`.
+4. **UI** — A single-page chat served by FastAPI. Answers render as markdown,
+   and each cited filename becomes a link to the exact passage on a rendered
+   handbook page (`/docs/{file}?chunk=N`, highlighted). Under every answer,
+   "How this answer was found" shows the retrieved chunks with distances,
+   which were cited, latency and token use. `/evals` shows saved eval runs
+   side by side. Provider errors are shown with their original message.
 
-5. **Evaluate** — `eval_cli.py` sends each question to `/ask` and checks the
-   answer against keyword assertions. With `--model-grade`, a second Claude call
-   judges each answer against a human-written rubric.
+5. **Evaluate** — `eval_cli.py` runs each labelled question through the
+   pipeline and scores retrieval (hit rate, recall, MRR, context precision
+   against `expected_sources`) separately from the answer (keywords, refusal
+   behaviour, and optionally a judge model grading correctness and
+   groundedness). Results, latency and token use are saved per run.
