@@ -17,8 +17,12 @@ from src.config import (
     EVAL_QUESTIONS_FILE,
     EVAL_RESULTS_FILE,
     EVAL_RUNS_DIR,
+    API_KEY_ENV,
     GENERATION_MODEL,
     JUDGE_MODEL,
+    JUDGE_PROVIDER,
+    LLM_PROVIDER,
+    Provider,
     TOP_K,
     require_env,
 )
@@ -91,6 +95,17 @@ def print_case(result: CaseResult) -> None:
         print(f"        answer:  {result.answer[:300]}")
 
 
+def required_keys(retrieval_only: bool, judged: bool,
+                  llm_provider: Provider, judge_provider: Provider) -> list[str]:
+    """Environment variables this run needs; embeddings always need OpenAI."""
+    needed = [API_KEY_ENV["openai"]]
+    if not retrieval_only:
+        needed.append(API_KEY_ENV[llm_provider])
+    if judged:
+        needed.append(API_KEY_ENV[judge_provider])
+    return list(dict.fromkeys(needed))
+
+
 def _latest_run(runs_dir: Path) -> Path | None:
     """Most recent saved run file, by name (run ids sort by time)."""
     runs = sorted(runs_dir.glob("*.json"))
@@ -126,7 +141,7 @@ def main(argv: list[str]) -> int:
         baseline_path = Path(args.compare)
 
     # Fail once, up front, instead of once per case.
-    needed = ["OPENAI_API_KEY"] + ([] if args.retrieval_only else ["ANTHROPIC_API_KEY"])
+    needed = required_keys(args.retrieval_only, args.judge, LLM_PROVIDER, JUDGE_PROVIDER)
     try:
         for name in needed:
             require_env(name)
@@ -145,14 +160,19 @@ def main(argv: list[str]) -> int:
         judge_fn = judge
 
     mode = "retrieval-only" if args.retrieval_only else ("judged" if args.judge else "answers")
-    print(f"Running {len(cases)} cases [{mode}, k={args.k}]\n" + "=" * 70)
+    models = "" if args.retrieval_only else f", {LLM_PROVIDER}:{GENERATION_MODEL}"
+    if args.judge:
+        models += f", judge {JUDGE_PROVIDER}:{JUDGE_MODEL}"
+    print(f"Running {len(cases)} cases [{mode}, k={args.k}{models}]\n" + "=" * 70)
     results = run_eval(cases, retrieve, generate_fn, judge_fn, args.k, on_result=print_case)
     print("=" * 70)
 
     config = {
         "mode": mode,
         "top_k": args.k,
+        "generation_provider": None if args.retrieval_only else LLM_PROVIDER,
         "generation_model": None if args.retrieval_only else GENERATION_MODEL,
+        "judge_provider": JUDGE_PROVIDER if args.judge else None,
         "judge_model": JUDGE_MODEL if args.judge else None,
         "embedding_model": EMBEDDING_MODEL,
         "chunk_target_tokens": CHUNK_TARGET_TOKENS,

@@ -192,7 +192,55 @@
     #send:disabled svg { fill: var(--faint); }
     .input-hint { text-align: center; font-size: 11px; color: var(--faint); margin-top: 8px; }
 
+    /* ── Model settings ── */
+    .model-btn {
+      display: inline-flex; align-items: center; gap: 6px; margin-left: 6px;
+      font: inherit; font-size: 12px; font-weight: 600; color: white; cursor: pointer;
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2);
+      padding: 5px 10px; border-radius: 8px; white-space: nowrap;
+    }
+    .model-btn:hover, .model-btn[aria-expanded="true"] { background: rgba(255,255,255,.16); }
+    .model-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+    .model-btn .model-name { font-weight: 500; color: rgba(255,255,255,.7); }
+    .model-btn .key-dot { width: 7px; height: 7px; border-radius: 50%; background: #ffd27a; }
+
+    .settings {
+      position: absolute; top: 64px; right: 16px; z-index: 20; width: 360px; max-width: calc(100vw - 32px);
+      background: var(--surface); color: var(--text); border: 1px solid var(--border);
+      border-radius: 12px; box-shadow: var(--shadow); padding: 18px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .settings[hidden] { display: none; }
+    .settings h2 { font-size: 15px; font-weight: 700; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field[hidden] { display: none; }
+    .field-label, .field label { font-size: 12.5px; font-weight: 600; color: var(--text-2); }
+    .field input {
+      font: inherit; font-size: 13.5px; font-family: var(--mono); color: var(--text);
+      background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 8px;
+      padding: 8px 10px; width: 100%;
+    }
+    .field input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+    .field-hint { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+    .field-hint.required { color: var(--warn); }
+    .settings-error {
+      font-size: 13px; line-height: 1.45; color: var(--text); background: var(--bad-soft);
+      border-left: 3px solid var(--bad); border-radius: 8px; padding: 8px 10px;
+    }
+    .settings-error[hidden] { display: none; }
+    .settings-note { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .settings-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .settings-actions button {
+      font: inherit; font-size: 13px; font-weight: 600; border-radius: 8px; padding: 7px 14px; cursor: pointer;
+      background: none; color: var(--text-2); border: 1px solid var(--border-strong);
+    }
+    .settings-actions button.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+
     @media (max-width: 560px) {
+      .model-btn .model-name { display: none; }
+      /* The model button needs the room; the logo still links home. */
+      .brand-text { display: none; }
+      .settings { right: 16px; left: 16px; width: auto; max-width: none; }
       .thread { padding: 18px 0; }
       .thread-inner { padding: 0 16px; }
       .input-bar { padding: 10px 16px; }
@@ -218,7 +266,35 @@
       <a href="/" aria-current="page">Assistant</a>
       <a href="/evals">Evals</a>
       <span class="index-badge" id="index-badge">Checking index…</span>
+      <button class="model-btn" id="model-btn" type="button" aria-expanded="false" aria-controls="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg>
+        <span id="model-provider">Model</span><span class="model-name" id="model-name"></span>
+      </button>
     </nav>
+    <section class="settings" id="settings" role="dialog" aria-labelledby="settings-title" hidden>
+      <h2 id="settings-title">Model settings</h2>
+      <div class="field">
+        <span class="field-label" id="provider-label">Answers from</span>
+        <div class="segmented" role="group" aria-labelledby="provider-label" id="provider-seg"></div>
+        <p class="field-hint" id="provider-hint"></p>
+      </div>
+      <div class="field">
+        <label for="openai-key">OpenAI API key</label>
+        <input id="openai-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…" />
+        <p class="field-hint" id="openai-hint"></p>
+      </div>
+      <div class="field" id="anthropic-field">
+        <label for="anthropic-key">Anthropic API key</label>
+        <input id="anthropic-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…" />
+        <p class="field-hint" id="anthropic-hint"></p>
+      </div>
+      <div class="settings-error" id="settings-error" role="alert" hidden></div>
+      <p class="settings-note">Keys stay in this browser tab and are sent to this server with each question. The server uses them for that request only; it never saves or logs them.</p>
+      <div class="settings-actions">
+        <button type="button" id="forget-keys">Forget keys</button>
+        <button type="button" class="primary" id="settings-done">Done</button>
+      </div>
+    </section>
   </header>
 
   <main class="thread" id="thread">
@@ -466,6 +542,150 @@
     scrollToBottom();
   }
 
+  // ── Model settings ───────────────────────────────────────────────────────
+  // The provider choice and any keys typed here live in sessionStorage: they
+  // survive a reload but not closing the tab. Keys go to the server as
+  // headers on each /ask and nowhere else.
+  const STORE_KEY = 'northwind.modelSettings';
+  const PROVIDER_LABEL = { anthropic: 'Anthropic', openai: 'OpenAI' };
+  const settingsPanel = document.getElementById('settings');
+  const modelBtn = document.getElementById('model-btn');
+  const openaiInput = document.getElementById('openai-key');
+  const anthropicInput = document.getElementById('anthropic-key');
+  const settingsError = document.getElementById('settings-error');
+
+  let serverConfig = null;
+  const settings = { provider: null, keys: { openai: '', anthropic: '' } };
+
+  function loadSettings() {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(STORE_KEY) || 'null');
+      if (saved && typeof saved === 'object') {
+        if (saved.provider in PROVIDER_LABEL) settings.provider = saved.provider;
+        settings.keys.openai = typeof saved.keys?.openai === 'string' ? saved.keys.openai : '';
+        settings.keys.anthropic = typeof saved.keys?.anthropic === 'string' ? saved.keys.anthropic : '';
+      }
+    } catch (err) {
+      console.warn('Model settings could not be read; starting fresh.', err);
+    }
+  }
+
+  function saveSettings() {
+    try {
+      sessionStorage.setItem(STORE_KEY, JSON.stringify(settings));
+    } catch (err) {
+      console.warn('Model settings could not be saved; they will last until reload.', err);
+    }
+  }
+
+  function serverHasKey(provider) { return Boolean(serverConfig?.server_keys?.[provider]); }
+
+  function keyHint(provider, purpose) {
+    if (settings.keys[provider]) return { text: `Using the key you entered, for ${purpose}.`, required: false };
+    if (serverHasKey(provider)) return { text: `Optional: the server has its own key. Used for ${purpose}.`, required: false };
+    return { text: `Required: the server has no ${PROVIDER_LABEL[provider]} key. Used for ${purpose}.`, required: true };
+  }
+
+  function missingKey() {
+    const needed = ['openai', settings.provider];
+    return needed.some(p => !settings.keys[p] && !serverHasKey(p));
+  }
+
+  function renderSettings() {
+    const provider = settings.provider;
+    const model = serverConfig?.models?.[provider] || '';
+    document.getElementById('model-provider').textContent = PROVIDER_LABEL[provider];
+    document.getElementById('model-name').textContent = model;
+    modelBtn.querySelector('.key-dot')?.remove();
+    if (serverConfig && missingKey()) {
+      const dot = el('span', 'key-dot');
+      dot.setAttribute('aria-label', 'API key needed');
+      dot.title = 'API key needed';
+      modelBtn.appendChild(dot);
+    }
+    modelBtn.setAttribute('aria-label', `Model settings: ${PROVIDER_LABEL[provider]} ${model}`.trim());
+
+    const seg = document.getElementById('provider-seg');
+    seg.replaceChildren(...Object.keys(PROVIDER_LABEL).map(p => {
+      const b = el('button', '', PROVIDER_LABEL[p]);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(p === provider));
+      b.addEventListener('click', () => { settings.provider = p; saveSettings(); renderSettings(); });
+      return b;
+    }));
+    document.getElementById('provider-hint').textContent = model ? `Answers are written by ${model}.` : '';
+
+    const openaiPurpose = provider === 'openai' ? 'search and answers' : 'search (query embeddings)';
+    [['openai', openaiPurpose], ['anthropic', 'answers']].forEach(([p, purpose]) => {
+      const hint = document.getElementById(`${p}-hint`);
+      const { text, required } = keyHint(p, purpose);
+      hint.textContent = text;
+      hint.classList.toggle('required', required);
+    });
+    document.getElementById('anthropic-field').hidden = provider !== 'anthropic';
+  }
+
+  function openSettings(errorMessage) {
+    settingsError.hidden = !errorMessage;
+    settingsError.textContent = errorMessage || '';
+    settingsPanel.hidden = false;
+    modelBtn.setAttribute('aria-expanded', 'true');
+    const firstEmpty = [openaiInput, anthropicInput].find(i => !i.closest('[hidden]') && !i.value);
+    (firstEmpty || openaiInput).focus();
+  }
+
+  function closeSettings({ restoreFocus = true } = {}) {
+    if (settingsPanel.hidden) return;
+    settingsPanel.hidden = true;
+    settingsError.hidden = true;
+    modelBtn.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) modelBtn.focus();
+  }
+
+  [[openaiInput, 'openai'], [anthropicInput, 'anthropic']].forEach(([input, p]) => {
+    input.addEventListener('input', () => { settings.keys[p] = input.value.trim(); saveSettings(); renderSettings(); });
+  });
+  modelBtn.addEventListener('click', () => (settingsPanel.hidden ? openSettings() : closeSettings()));
+  document.getElementById('settings-done').addEventListener('click', () => closeSettings());
+  document.getElementById('forget-keys').addEventListener('click', () => {
+    settings.keys = { openai: '', anthropic: '' };
+    openaiInput.value = anthropicInput.value = '';
+    saveSettings();
+    renderSettings();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
+  document.addEventListener('click', e => {
+    // composedPath, not contains(): the provider toggle re-renders its buttons,
+    // so the clicked node may already be detached when this runs.
+    const path = e.composedPath();
+    if (!settingsPanel.hidden && !path.includes(settingsPanel) && !path.includes(modelBtn)) {
+      closeSettings({ restoreFocus: false });
+    }
+  });
+
+  async function initSettings() {
+    loadSettings();
+    openaiInput.value = settings.keys.openai;
+    anthropicInput.value = settings.keys.anthropic;
+    try {
+      const res = await fetch('/api/config');
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      serverConfig = await res.json();
+    } catch (err) {
+      console.warn('Could not load /api/config; using the server default provider.', err);
+    }
+    settings.provider = settings.provider || serverConfig?.default_provider || 'anthropic';
+    renderSettings();
+  }
+
+  function askHeaders() {
+    const headers = { 'Content-Type': 'application/json' };
+    // Only the keys this request needs: OpenAI for search, plus the answer provider's.
+    if (settings.keys.openai) headers['X-OpenAI-Key'] = settings.keys.openai;
+    if (settings.provider === 'anthropic' && settings.keys.anthropic) headers['X-Anthropic-Key'] = settings.keys.anthropic;
+    return headers;
+  }
+
   // ── Asking ───────────────────────────────────────────────────────────────
   function setLoading(on) { sendBtn.disabled = on; textarea.disabled = on; }
 
@@ -476,14 +696,16 @@
     try {
       const res = await fetch('/ask', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question }),
+        headers: askHeaders(),
+        body: JSON.stringify({ question, provider: settings.provider }),
       });
       const data = await res.json().catch(() => ({}));
       thinking.stop();
       if (!res.ok) {
         const detail = typeof data.detail === 'string' ? data.detail : `The server returned ${res.status}.`;
         appendError(question, detail);
+        // Missing or rejected key: open the settings where it can be fixed.
+        if (/api key/i.test(detail)) openSettings(detail);
       } else {
         appendAnswer(data);
       }
@@ -517,6 +739,7 @@
   });
 
   checkIndex();
+  initSettings();
   textarea.focus();
 </script>
 </body>

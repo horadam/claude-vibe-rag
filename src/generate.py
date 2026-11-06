@@ -1,12 +1,10 @@
-"""Prompt assembly and Claude answer generation."""
+"""Prompt assembly and answer generation (Anthropic or OpenAI, via src.llm)."""
 
 import logging
 from dataclasses import dataclass
-from functools import cache
 
-import anthropic
-
-from src.config import GENERATION_MODEL, require_env
+from src import llm
+from src.config import GENERATION_MODEL, GENERATION_MODELS, LLM_PROVIDER, Provider
 from src.retrieve import RetrievedChunk
 
 # The exact sentence the model must use when the handbook has no answer.
@@ -32,12 +30,6 @@ _CHUNK_PREVIEW_CHARS = 120
 logger = logging.getLogger(__name__)
 
 
-@cache
-def _client() -> anthropic.Anthropic:
-    """Return the shared Anthropic client, created on first use."""
-    return anthropic.Anthropic(api_key=require_env("ANTHROPIC_API_KEY"))
-
-
 @dataclass
 class Citation:
     source: str
@@ -61,25 +53,28 @@ def build_context_block(chunks: list[RetrievedChunk]) -> str:
     return "\n\n".join(parts)
 
 
-def generate(question: str, chunks: list[RetrievedChunk]) -> GenerationResult:
-    """Assemble the prompt, call Claude, and return the answer with citations."""
+def generate(
+    question: str,
+    chunks: list[RetrievedChunk],
+    provider: Provider | None = None,
+    api_key: str | None = None,
+) -> GenerationResult:
+    """Assemble the prompt, call the generation model, and return the answer with citations.
+
+    provider defaults to LLM_PROVIDER; api_key defaults to that provider's .env key.
+    """
+    provider = provider or LLM_PROVIDER
+    model = GENERATION_MODELS[provider]
     context_block = build_context_block(chunks)
     user_message = f"CONTEXT:\n{context_block}\n\nQUESTION: {question}"
 
-    logger.info("calling %s with %d context chunks", GENERATION_MODEL, len(chunks))
-    message = _client().messages.create(
-        model=GENERATION_MODEL,
-        max_tokens=1024,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_message}],
-    )
-
-    answer = message.content[0].text
-    usage = message.usage
+    logger.info("calling %s (%s) with %d context chunks", model, provider, len(chunks))
+    completion = llm.complete(provider, model, SYSTEM_PROMPT, user_message, max_tokens=1024, api_key=api_key)
+    answer = completion.text
     logger.info(
         "generation complete — input_tokens=%d output_tokens=%d",
-        usage.input_tokens,
-        usage.output_tokens,
+        completion.input_tokens,
+        completion.output_tokens,
     )
 
     # build citations from chunks whose source appears in the answer
@@ -94,7 +89,7 @@ def generate(question: str, chunks: list[RetrievedChunk]) -> GenerationResult:
     return GenerationResult(
         answer=answer,
         citations=citations,
-        model=message.model,
-        input_tokens=usage.input_tokens,
-        output_tokens=usage.output_tokens,
+        model=completion.model,
+        input_tokens=completion.input_tokens,
+        output_tokens=completion.output_tokens,
     )

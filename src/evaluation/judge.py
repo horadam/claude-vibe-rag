@@ -13,12 +13,10 @@ changes move these two numbers differently, so they are reported separately.
 
 import logging
 from dataclasses import dataclass
-from functools import cache
 from typing import Literal
 
-import anthropic
-
-from src.config import JUDGE_MODEL, require_env
+from src import llm
+from src.config import JUDGE_MODEL, JUDGE_PROVIDER
 from src.evaluation.dataset import EvalCase
 from src.generate import build_context_block
 from src.retrieve import RetrievedChunk
@@ -43,10 +41,10 @@ if it happens to be true. A refusal that makes no factual claims is grounded.
 Record your grades with the record_grade tool. Keep each reason to one sentence.\
 """
 
-_GRADE_TOOL = {
-    "name": "record_grade",
-    "description": "Record the grade for both criteria.",
-    "input_schema": {
+_GRADE_TOOL = llm.Tool(
+    name="record_grade",
+    description="Record the grade for both criteria.",
+    schema={
         "type": "object",
         "properties": {
             "correct": {"type": "string", "enum": ["PASS", "FAIL"]},
@@ -56,7 +54,7 @@ _GRADE_TOOL = {
         },
         "required": ["correct", "correct_reason", "grounded", "grounded_reason"],
     },
-}
+)
 
 
 @dataclass
@@ -68,12 +66,6 @@ class JudgeResult:
     grounded: Verdict
     grounded_reason: str
     model: str
-
-
-@cache
-def _client() -> anthropic.Anthropic:
-    """Return the shared Anthropic client, created on first use."""
-    return anthropic.Anthropic(api_key=require_env("ANTHROPIC_API_KEY"))
 
 
 def build_judge_message(case: EvalCase, answer: str, chunks: list[RetrievedChunk]) -> str:
@@ -117,16 +109,15 @@ def _error(reason: str, model: str) -> JudgeResult:
 
 def judge(case: EvalCase, answer: str, chunks: list[RetrievedChunk]) -> JudgeResult:
     """Ask the judge model to grade one answer on correctness and groundedness."""
-    message = _client().messages.create(
-        model=JUDGE_MODEL,
+    # Forcing the tool call makes the grade structured data, not prose to parse.
+    call = llm.complete_with_tool(
+        JUDGE_PROVIDER,
+        JUDGE_MODEL,
+        JUDGE_SYSTEM_PROMPT,
+        build_judge_message(case, answer, chunks),
+        _GRADE_TOOL,
         max_tokens=512,
-        system=JUDGE_SYSTEM_PROMPT,
-        tools=[_GRADE_TOOL],
-        # Forcing the tool call makes the grade structured data, not prose to parse.
-        tool_choice={"type": "tool", "name": "record_grade"},
-        messages=[{"role": "user", "content": build_judge_message(case, answer, chunks)}],
     )
-    tool_uses = [block for block in message.content if block.type == "tool_use"]
-    if not tool_uses:
-        return _error("judge did not call record_grade", message.model)
-    return parse_grade(tool_uses[0].input, message.model)
+    if call.error:
+        return _error(call.error, call.model)
+    return parse_grade(call.arguments, call.model)

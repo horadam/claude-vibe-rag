@@ -10,7 +10,7 @@ service, written to be studied and explained. Each feature has the same parts:
 - **Try it**: something to run or change to check your understanding
 
 General concepts are also in the learning notebook
-(`/Users/punchcode/Projects/learning-notes.md`, entries L017–L020).
+(`/Users/punchcode/Projects/learning-notes.md`, entries L017–L020; the provider work extends L005 and L009).
 
 ---
 
@@ -208,9 +208,10 @@ chunks, which points to retrieval.
 - **The judge sees the context.** It gets the same chunks the generator saw.
   Groundedness can't be judged without them.
 - **A different, larger model.** The judge defaults to `claude-opus-5-5`; the
-  generator is `claude-sonnet-4-6`. Models tend to rate their own style of
-  answer favourably (self-preference bias). Override with `JUDGE_MODEL` in
-  `.env`.
+  generator is `claude-sonnet-4-6`. On OpenAI it's `gpt-5` judging
+  `gpt-5-mini`. Models tend to rate their own style of answer favourably
+  (self-preference bias). Override with `ANTHROPIC_JUDGE_MODEL` /
+  `OPENAI_JUDGE_MODEL` in `.env` (see feature 12).
 - **A forced tool call.** The judge must answer by calling a `record_grade`
   tool whose schema allows only `PASS` or `FAIL`. The result arrives as
   structured data, so no JSON is pulled out of free text. The old version
@@ -519,3 +520,92 @@ key' reads as exactly that."
   end-to-end path still needs one look once keys are added.
 - "Cited" is document-level and inferred from filenames in the answer.
 
+
+---
+
+## Part 3 — Choosing the model provider (2026-11-06)
+
+### 12. Anthropic or OpenAI, from `.env` or the UI
+
+**What it is.** Answers and eval grading can run on Anthropic (Claude) or
+OpenAI (GPT):
+- `LLM_PROVIDER` and `JUDGE_PROVIDER` in `.env` set the default.
+- The chat page's **Model settings** switches it per browser tab and accepts
+  the user's own keys.
+
+Search always uses OpenAI embeddings. The index was built from OpenAI vectors,
+and Anthropic has no embeddings API, so the OpenAI key is needed in both modes.
+
+**Why it matters.** The project shouldn't stop working because one provider
+account has no credit. It also makes a portfolio point: the RAG pipeline and
+the evals don't depend on the vendor. You can run the same eval with
+`LLM_PROVIDER=openai` and compare runs, because each run record stores the
+provider and model.
+
+**How it works.**
+- **One adapter module.** [src/llm.py](../src/llm.py) is the only code that
+  knows the two APIs. `complete()` sends a system prompt and a user message
+  and returns text plus token counts. `complete_with_tool()` forces a tool
+  call. [generate.py](../src/generate.py) and
+  [judge.py](../src/evaluation/judge.py) only name a provider and a model.
+- **The same request, two shapes.**
+
+  | | Anthropic | OpenAI |
+  |---|---|---|
+  | System prompt | `system=` parameter | first message, role `system` |
+  | Output limit | `max_tokens` | `max_completion_tokens` (includes hidden reasoning tokens, so it gets headroom) |
+  | Forced tool | `tool_choice={"type":"tool","name":...}` | `tool_choice={"type":"function","function":{"name":...}}` |
+  | Tool arguments | already an object | a JSON string, decoded; bad JSON → judge ERROR |
+  | Tokens | `input_tokens` / `output_tokens` | `prompt_tokens` / `completion_tokens` |
+
+- **Empty output is an error, not an answer.** If a provider returns no text
+  (cut off, or a refusal field), `ProviderOutputError` reaches the UI as a 502
+  with the reason. A blank answer would otherwise be scored as a failed case.
+- **Keys from the browser.** The UI keeps keys in `sessionStorage`, so they
+  survive a reload but not closing the tab. It sends them as `X-OpenAI-Key` /
+  `X-Anthropic-Key` headers on `/ask`, never in the URL or body. The server:
+  - builds a client for that request only, so a user's key never sits in a
+    cached module-level client;
+  - falls back to the `.env` key when no header is sent;
+  - if neither exists, returns a 503 that says which key is missing and
+    where to add it.
+
+  `/api/config` tells the UI only *whether* the server has each key, never
+  the key itself.
+- **Provider errors are masked, not hidden.** OpenAI's "wrong key" message
+  quotes part of the key. The 502 handlers replace anything shaped like
+  `sk-…` and pass the rest of the message through, so the cause stays visible.
+
+**Say it in 30 seconds.** "All the provider-specific code is in one adapter.
+Generation and the judge ask for 'a completion' or 'a forced tool call', and
+the adapter maps that to Anthropic's or OpenAI's API. That covers the system
+prompt, the token limit, the tool-choice syntax and the token counts. A
+setting or a toggle in the UI picks the provider, and the eval records which
+one ran, so you can compare Claude and GPT on the same questions."
+
+**Questions you might get.**
+- *Why not use LangChain for this?* Two providers and two call shapes is about
+  150 lines. Writing the adapter yourself keeps the differences visible, such
+  as reasoning tokens counting against the limit, and adds no dependency.
+- *Is it safe to send API keys from the browser?* Over HTTPS, to your own
+  server, used per request and never stored or logged, it's the usual
+  "bring your own key" pattern. The remaining risk is the browser: any script
+  on the page can read `sessionStorage`. That's why the page loads no
+  third-party scripts except two vendored libraries, and keys go when the
+  tab closes.
+- *Why does Anthropic mode still need an OpenAI key?* The question has to be
+  embedded with the same model as the index. Switching embeddings would mean
+  a second index and new retrieval numbers.
+
+**Try it.** Run `uv run python eval_cli.py --judge --label openai` with
+`LLM_PROVIDER=openai`, then later run the same command on Anthropic with
+`--compare latest`. Which metrics move? Retrieval shouldn't, because both
+runs use the same embeddings. Then explain why.
+
+**Known limits.**
+- The OpenAI default model names (`gpt-5-mini`, `gpt-5`) weren't checked
+  against a live account here. Override them in `.env` if your account lists
+  others.
+- The eval CLI uses `.env` settings only; the UI toggle affects the chat.
+- The refusal check looks for one exact sentence. GPT may paraphrase it more
+  often than Claude; the out-of-scope cases will show that.

@@ -4,7 +4,7 @@ A minimal RAG service that answers questions about a fictional company's HR
 policies. Covers the full loop end to end: ingest → retrieve → generate →
 evaluate — plus a polished chat UI.
 
-**Stack:** FastAPI · ChromaDB · OpenAI embeddings · Claude (Anthropic) · Vanilla JS
+**Stack:** FastAPI · ChromaDB · OpenAI embeddings · Claude or GPT for answers · Vanilla JS
 
 ---
 
@@ -31,6 +31,17 @@ Edit `.env` and add your API keys:
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
 ```
+
+**Choosing a provider.** Search always embeds with OpenAI, so an OpenAI key is
+always needed. Answers and the eval judge use Anthropic by default; set
+`LLM_PROVIDER=openai` to run everything on OpenAI with a single key. Model
+names and `JUDGE_PROVIDER` can be overridden too; see `.env.example`.
+
+In the chat UI, **Model settings** (top right) switches between Anthropic and
+OpenAI per tab and accepts your own keys. A key typed there is optional when
+the server's `.env` already has one. It's kept in the tab's session storage
+and sent with each question as a header. The server uses it for that request
+only and never saves or logs it.
 
 ---
 
@@ -76,7 +87,7 @@ in-process, so the server doesn't need to be running.
 ```bash
 uv run python eval_cli.py                    # retrieval + answer checks
 uv run python eval_cli.py --judge            # add model-graded correctness and groundedness
-uv run python eval_cli.py --retrieval-only   # retrieval metrics only (embedding calls, no Claude)
+uv run python eval_cli.py --retrieval-only   # retrieval metrics only (embedding calls only)
 uv run python eval_cli.py --k 3 --label k3 --compare latest   # try a change, diff against last run
 uv run python eval_cli.py --ids pip_duration,out_of_scope_ticker
 ```
@@ -115,7 +126,8 @@ src/
   config.py      Constants and env loading
   ingest.py      Chunking, embedding, Chroma upsert
   retrieve.py    Query embedding + vector search
-  generate.py    Prompt assembly + Claude call
+  generate.py    Prompt assembly + answer generation
+  llm.py         Anthropic / OpenAI adapter (the only provider-specific code)
   server.py      FastAPI app
   evaluation/    Eval harness: dataset, scoring, judge, runner, report
 tests/           Offline unit tests
@@ -136,9 +148,10 @@ chroma_db/       Local vector store (gitignored, created on first ingest)
 2. **Retrieve** — The user's question is embedded with the same model. ChromaDB
    returns the 5 nearest chunks by cosine distance.
 
-3. **Generate** — The chunks are assembled into a `CONTEXT` block and sent to
-   `claude-sonnet-4-6` with a system prompt that requires grounded answers and
-   source citations.
+3. **Generate** — The chunks are assembled into a `CONTEXT` block and sent,
+   with a system prompt that requires grounded answers and source citations,
+   to `claude-sonnet-4-6` or (with `LLM_PROVIDER=openai`, or chosen in the UI)
+   `gpt-5-mini`.
 
 4. **UI** — A single-page chat served by FastAPI. Answers render as markdown,
    and each cited filename becomes a link to the exact passage on a rendered

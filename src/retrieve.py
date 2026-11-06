@@ -2,28 +2,19 @@
 
 import logging
 from dataclasses import dataclass
-from functools import cache
 
 import chromadb
 from chromadb.errors import NotFoundError
-from openai import OpenAI
 
+from src import llm
 from src.config import (
     CHROMA_DIR,
     COLLECTION_NAME,
     EMBEDDING_MODEL,
     TOP_K,
-    require_env,
 )
 
 logger = logging.getLogger(__name__)
-
-
-
-@cache
-def _openai() -> OpenAI:
-    """Return the shared OpenAI client, created on first use."""
-    return OpenAI(api_key=require_env("OPENAI_API_KEY"))
 
 
 @dataclass
@@ -66,13 +57,16 @@ def get_chunk(source: str, chunk_index: int) -> str | None:
     return result["documents"][0] if result["documents"] else None
 
 
-def retrieve(question: str, top_k: int = TOP_K) -> list[RetrievedChunk]:
-    """Embed question and return the top_k nearest chunks from Chroma."""
+def retrieve(question: str, top_k: int = TOP_K, api_key: str | None = None) -> list[RetrievedChunk]:
+    """Embed question and return the top_k nearest chunks from Chroma.
+
+    api_key is an OpenAI key for the query embedding; None uses the .env key.
+    """
     # Open the collection first, so a missing index fails before a paid API call.
     collection = _collection()
 
     logger.info("embedding question (model=%s): %r", EMBEDDING_MODEL, question[:120])
-    response = _openai().embeddings.create(model=EMBEDDING_MODEL, input=[question])
+    response = llm.openai_client(api_key).embeddings.create(model=EMBEDDING_MODEL, input=[question])
     query_embedding = response.data[0].embedding
 
     results = collection.query(
