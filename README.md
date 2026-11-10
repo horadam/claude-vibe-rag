@@ -6,7 +6,7 @@ evaluate — plus a polished chat UI.
 
 **Stack:** FastAPI · ChromaDB (build) + JSON vector search (query) · OpenAI embeddings · Claude or GPT for answers · Vanilla JS
 
-**Live:** [eval results](https://rag-practice-kappa.vercel.app/evals) (no key needed) · [chat](https://rag-practice-kappa.vercel.app) (bring your own OpenAI key; Anthropic optional)
+**Live:** [eval results](https://handbook-rag.vercel.app/evals) (no key needed) · [chat](https://handbook-rag.vercel.app) (bring your own OpenAI key; Anthropic optional)
 
 ---
 
@@ -164,11 +164,15 @@ Vercel detects the FastAPI app in `src/server.py` and installs dependencies
 from `pyproject.toml` and `uv.lock`. Don't add server keys unless you want to
 pay for visitors' questions.
 
+The Vercel project `handbook-rag` is connected to this GitHub repo: a push
+to `master` deploys to production, and every pull request gets its own
+preview URL. To deploy by hand from a linked checkout instead:
+
 ```bash
 npx vercel deploy --prod
 ```
 
-Live: https://rag-practice-kappa.vercel.app
+Live: https://handbook-rag.vercel.app
 
 ---
 
