@@ -1,0 +1,1152 @@
+{
+  "run_id": "20261109T150357Z-prompt-v2",
+  "created_at": "2026-11-09T15:03:57+00:00",
+  "label": "prompt-v2",
+  "config": {
+    "mode": "judged",
+    "top_k": 5,
+    "generation_provider": "openai",
+    "generation_model": "gpt-5-mini",
+    "judge_provider": "openai",
+    "judge_model": "gpt-5",
+    "embedding_model": "text-embedding-3-small",
+    "chunk_target_tokens": 500,
+    "chunk_overlap_tokens": 50,
+    "dataset_sha": "30a7e64ad408",
+    "filters": {
+      "ids": null,
+      "category": null
+    },
+    "git": {
+      "commit": "1618bb9",
+      "dirty": true
+    }
+  },
+  "summary": {
+    "cases": 17,
+    "errors": 0,
+    "answers": {
+      "passed": 17,
+      "total": 17
+    },
+    "retrieval": {
+      "cases": 13,
+      "hit_rate": 1.0,
+      "recall": 1.0,
+      "mrr": 1.0,
+      "precision": 0.338
+    },
+    "refusal": {
+      "correct_refusals": 4,
+      "should_refuse": 4,
+      "false_refusals": 0,
+      "answerable": 13
+    },
+    "judge": {
+      "correct": 17,
+      "grounded": 15,
+      "errors": 0,
+      "total": 17
+    },
+    "latency_ms": {
+      "retrieve_p50": 296.0,
+      "retrieve_p95": 1294.7,
+      "generate_p50": 8270.3,
+      "generate_p95": 16765.3
+    },
+    "tokens": {
+      "input": 36201,
+      "output": 11721
+    },
+    "by_category": {
+      "ambiguous": {
+        "cases": 2,
+        "passed": 2,
+        "judge_correct": 2,
+        "judge_grounded": 1,
+        "judged": 2,
+        "recall": 1.0
+      },
+      "false_premise": {
+        "cases": 1,
+        "passed": 1,
+        "judge_correct": 1,
+        "judge_grounded": 1,
+        "judged": 1,
+        "recall": null
+      },
+      "multi_doc": {
+        "cases": 5,
+        "passed": 5,
+        "judge_correct": 5,
+        "judge_grounded": 5,
+        "judged": 5,
+        "recall": 1.0
+      },
+      "out_of_scope": {
+        "cases": 3,
+        "passed": 3,
+        "judge_correct": 3,
+        "judge_grounded": 3,
+        "judged": 3,
+        "recall": null
+      },
+      "single_doc": {
+        "cases": 6,
+        "passed": 6,
+        "judge_correct": 6,
+        "judge_grounded": 5,
+        "judged": 6,
+        "recall": 1.0
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "pto_accrual_rate",
+      "category": "single_doc",
+      "question": "How much PTO do employees accrue per month?",
+      "expects_refusal": false,
+      "expected_sources": [
+        "pto_policy.md"
+      ],
+      "retrieved": [
+        {
+          "source": "pto_policy.md",
+          "chunk_index": 0,
+          "distance": 0.8212
+        },
+        {
+          "source": "compensation_equity.md",
+          "chunk_index": 1,
+          "distance": 1.2339
+        },
+        {
+          "source": "parental_leave.md",
+          "chunk_index": 0,
+          "distance": 1.3297
+        },
+        {
+          "source": "compensation_equity.md",
+          "chunk_index": 0,
+          "distance": 1.3766
+        },
+        {
+          "source": "health_benefits.md",
+          "chunk_index": 0,
+          "distance": 1.4013
+        }
+      ],
+      "retrieval": {
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "precision": 0.2,
+        "missing_sources": []
+      },
+      "answer": "Full-time employees accrue 1.5 days of PTO per month (18 days per calendar year). (pto_policy.md)\n\nDetails that affect this:\n- This applies to full-time employees; part-time employees receive prorated PTO based on scheduled hours. (pto_policy.md)  \n- Accrual begins on the first day of employment. Employees in their first 90 days accrue at the standard rate but generally may not use accrued PTO until the probationary period ends, except for documented medical necessity. (pto_policy.md)  \n- PTO balances are capped at 30 days; accrual pauses at the cap and resumes when the balance drops below 30 days. Up to 10 days of unused PTO may be carried into the following calendar year; any balance above 10 days is forfeited on January 1. (pto_policy.md)",
+      "refused": false,
+      "keyword": {
+        "passed": true,
+        "failures": []
+      },
+      "judge": {
+        "correct": "PASS",
+        "correct_reason": "It states that full-time employees accrue 1.5 days of PTO per month and that this equals 18 days per year, matching the rubric.",
+        "grounded": "PASS",
+        "grounded_reason": "All claims (accrual rate, full-time/part-time applicability, start of accrual, probation usage, cap, and carryover) are explicitly supported by the PTO policy in the provided context.",
+        "model": "gpt-5-2025-08-07"
+      },
+      "retrieve_ms": 1294.7,
+      "generate_ms": 8446.7,
+      "input_tokens": 2134,
+      "output_tokens": 562,
+      "error": null,
+      "passed": true,
+      "refusal_ok": true
+    },
+    {
+      "id": "pip_duration",
+      "category": "single_doc",
+      "question": "How long does a Performance Improvement Plan run?",
+      "expects_refusal": false,
+      "expected_sources": [
+        "performance_review.md"
+      ],
+      "retrieved": [
+        {
+          "source": "performance_review.md",
+          "chunk_index": 0,
+          "distance": 0.905
+        },
+        {
+          "source": "performance_review.md",
+          "chunk_index": 1,
+          "distance": 1.3601
+        },
+        {
+          "source": "code_of_conduct.md",
+          "chunk_index": 0,
+          "distance": 1.4457
+        },
+        {
+          "source": "parental_leave.md",
+          "chunk_index": 0,
+          "distance": 1.4551
+        },
+        {
+          "source": "health_benefits.md",
+          "chunk_index": 0,
+          "distance": 1.4741
+        }
+      ],
+      "retrieval": {
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "precision": 0.4,
+        "missing_sources": []
+      },
+      "answer": "A PIP runs for 60 days. It is initiated when an employee's composite score falls below 2.5 or when a specific behavioral issue requires structured remediation. PIPs include specific, measurable improvement targets, weekly check-ins with the manager, and formal reviews at the 30-day and 60-day marks. If performance meets targets by the end of the PIP, the PIP is closed and noted in the employee's record; if not, the employee may be placed on an extended PIP or separated (see the Termination and Offboarding Policy). (performance_review.md)",
+      "refused": false,
+      "keyword": {
+        "passed": true,
+        "failures": []
+      },
+      "judge": {
+        "correct": "PASS",
+        "correct_reason": "It explicitly states the PIP runs for 60 days and mentions weekly check-ins and formal 30- and 60-day reviews, meeting the rubric.",
+        "grounded": "PASS",
+        "grounded_reason": "All details (60-day duration, initiation criteria, weekly check-ins, 30/60-day reviews, and possible outcomes) are directly stated in performance_review.md.",
+        "model": "gpt-5-2025-08-07"
+      },
+      "retrieve_ms": 689.7,
+      "generate_ms": 7186.5,
+      "input_tokens": 2090,
+      "output_tokens": 448,
+      "error": null,
+      "passed": true,
+      "refusal_ok": true
+    },
+    {
+      "id": "home_office_stipend",
+      "category": "single_doc",
+      "question": "What is the one-time home office stipend amount for remote employees?",
+      "expects_refusal": false,
+      "expected_sources": [
+        "remote_work.md"
+      ],
+      "retrieved": [
+        {
+          "source": "remote_work.md",
+          "chunk_index": 0,
+          "distance": 1.0573
+        },
+        {
+          "source": "expense_reimbursement.md",
+          "chunk_index": 0,
+          "distance": 1.1469
+        },
+        {
+          "source": "compensation_equity.md",
+          "chunk_index": 1,
+          "distance": 1.2869
+        },
+        {
+          "source": "termination_offboarding.md",
+          "chunk_index": 1,
+          "distance": 1.3722
+        },
+        {
+          "source": "compensation_equity.md",
+          "chunk_index": 0,
+          "distance": 1.427
+        }
+      ],
+      "retrieval": {
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "precision": 0.2,
+        "missing_sources": []
+      },
+      "answer": "The one-time home office stipend is $750. (remote_work.md, expense_reimbursement.md)\n\nDetails: It is provided to new remote-eligible employees and is paid as a reimbursement after receipt submission. Eligible items include monitors, keyboards, and ergonomic accessories (personal entertainment equipment is not eligible). Submit the claim through Workday (Expenses > New Expense Report) using the category \"Home Office Setup\"; itemized receipts are required for expenses over $25. All expenses must be submitted within 30 days of being incurred, manager approval is required, and approved reimbursements are processed within two pay cycles. Remote-eligibility requirements (e.g., completion of a 90-day probationary period, being in good standing, and having a role that can be performed remotely) are in the Remote and Hybrid Work Policy. (remote_work.md, expense_reimbursement.md)",
+      "refused": false,
+      "keyword": {
+        "passed": true,
+        "failures": []
+      },
+      "judge": {
+        "correct": "PASS",
+        "correct_reason": "It explicitly states the stipend is $750, one-time, and for new remote-eligible employees as required.",
+        "grounded": "PASS",
+        "grounded_reason": "Every detail cited (amount, one-time nature, eligibility, reimbursement process, categories, receipts, timelines) is supported by the provided context documents.",
+        "model": "gpt-5-2025-08-07"
+      },
+      "retrieve_ms": 343.6,
+      "generate_ms": 9404.4,
+      "input_tokens": 1773,
+      "output_tokens": 822,
+      "error": null,
+      "passed": true,
+      "refusal_ok": true
+    },
+    {
+      "id": "company_holidays",
+      "category": "single_doc",
+      "question": "How many company holidays does Northwind Robotics observe each year?",
+      "expects_refusal": false,
+      "expected_sources": [
+        "pto_policy.md"
+      ],
+      "retrieved": [
+        {
+          "source": "pto_policy.md",
+          "chunk_index": 0,
+          "distance": 0.8304
+        },
+        {
+          "source": "remote_work.md",
+          "chunk_index": 0,
+          "distance": 0.9198
+        },
+        {
+          "source": "health_benefits.md",
+          "chunk_index": 0,
+          "distance": 0.9355
+        },
+        {
+          "source": "compensation_equity.md",
+          "chunk_index": 0,
+          "distance": 0.9656
+        },
+        {
+          "source": "information_security.md",
+          "chunk_index": 0,
+          "distance": 0.9946
+        }
+      ],
+      "retrieval": {
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "precision": 0.2,
+        "missing_sources": []
+      },
+      "answer": "Northwind Robotics observes 11 company holidays per year. These holidays are separate from PTO and do not count against accrued PTO balances (pto_policy.md).",
+      "refused": false,
+      "keyword": {
+        "passed": true,
+        "failures": []
+      },
+      "judge": {
+        "correct": "PASS",
+        "correct_reason": "The answer states there are 11 company holidays per year and clarifies they are separate from PTO, meeting all rubric requirements.",
+        "grounded": "PASS",
+        "grounded_reason": "The PTO policy context explicitly says Northwind Robotics observes 11 company holidays per year and that they are separate from PTO and do not count against accrued balances.",
+        "model": "gpt-5-2025-08-07"
+      },
+      "retrieve_ms": 840.1,
+      "generate_ms": 3068.1,
+      "input_tokens": 2589,
+      "output_tokens": 167,
+      "error": null,
+      "passed": true,
+      "refusal_ok": true
+    },
+    {
+      "id": "open_enrollment_timing",
+      "category": "single_doc",
+      "question": "When does open enrollment for health benefits take place?",
+      "expects_refusal": false,
+      "expected_sources": [
+        "health_benefits.md"
+      ],
+      "retrieved": [
+        {
+          "source": "health_benefits.md",
+          "chunk_index": 0,
+          "distance": 0.968
+        },
+        {
+          "source": "compensation_equity.md",
+          "chunk_index": 1,
+          "distance": 1.3845
+        },
+        {
+          "source": "parental_leave.md",
+          "chunk_index": 0,
+          "distance": 1.4901
+        },
+        {
+          "source": "termination_offboarding.md",
+          "chunk_index": 1,
+          "distance": 1.5153
+        },
+        {
+          "source": "performance_review.md",
+          "chunk_index": 0,
+          "distance": 1.5377
+        }
+      ],
+      "retrieval": {
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "precision": 0.2,
+        "missing_sources": []
+      },
+      "answer": "Open enrollment occurs each November for coverage beginning January 1. (health_benefits.md)\n\nDetails: during open enrollment employees may choose among the three medical plans (Gold PPO, Silver HMO, Bronze HDHP). Qualifying life events (marriage, birth, loss of other coverage) allow mid\u2011year enrollment changes within 30 days of the event. (health_benefits.md)",
+      "refused": false,
+      "keyword": {
+        "passed": true,
+        "failures": []
+      },
+      "judge": {
+        "correct": "PASS",
+        "correct_reason": "It explicitly states open enrollment occurs in November for coverage beginning January 1, as required by the rubric.",
+        "grounded": "PASS",
+        "grounded_reason": "All statements are directly supported by the provided Health Benefits context, including the timing, plan choices, and qualifying life event rules.",
+        "model": "gpt-5-2025-08-07"
+      },
+      "retrieve_ms": 419.0,
+      "generate_ms": 6449.1,
+      "input_tokens": 1733,
+      "output_tokens": 537,
+      "error": null,
+      "passed": true,
+      "refusal_ok": true
+    },
+    {
+      "id": "secondary_caregiver_max",
+      "category": "single_doc",
+      "question": "What is the most paid leave a secondary caregiver can take if they also use PTO?",
+      "expects_refusal": false,
+      "expected_sources": [
+        "parental_leave.md"
+      ],
+      "retrieved": [
+        {
+          "source": "parental_leave.md",
+          "chunk_index": 0,
+          "distance": 0.9576
+        },
+        {
+          "source": "pto_policy.md",
+          "chunk_index": 0,
+          "distance": 0.9774
+        },
+        {
+          "source": "compensation_equity.md",
+          "chunk_index": 1,
+          "distance": 1.334
+        },
+        {
+          "source": "health_benefits.md",
+          "chunk_index": 0,
+          "distance": 1.3677
+        },
+        {
+          "source": "termination_offboarding.md",
+          "chunk_index": 0,
+          "distance": 1.3711
+        }
+      ],
+      "retrieval": {
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "precision": 0.2,
+        "missing_sources": []
+      },
+      "answer": "Maximum paid leave for a secondary caregiver is 10 weeks total \u2014 this is the 6 weeks of paid parental leave plus up to 4 additional weeks paid by using accrued PTO (total combined paid period may not exceed 10 weeks) (parental_leave.md; pto_policy.md).\n\nDetails: this applies to full-time employees who have completed at least 6 months of continuous employment (parental_leave.md). Parental leave must be taken as a continuous block unless a return-to-work agreement is approved by HR; intermittent parental leave is not available (parental_leave.md). PTO used to top up parental leave is subject to the PTO and Vacation Policy (accrual, caps, and approval rules), including accrual of 1.5 days per month (18 days/year) and an accrual cap of 30 days; carryover rules and manager approval also apply (pto_policy.md). Employees should notify HR and their manager at least 8 weeks before the expected leave start date (parental_leave.md).",
+      "refused": false,
+      "keyword": {
+        "passed": true,
+        "failures": []
+      },
+      "judge": {
+        "correct": "PASS",
+        "correct_reason": "It explicitly states 6 weeks of base paid leave for the secondary caregiver and that the combined total with PTO may not exceed 10 weeks, matching the rubric.",
+        "grounded": "FAIL",
+        "grounded_reason": "It adds a derived figure of \u201cup to 4 additional weeks\u201d which is not explicitly stated in the provided context.",
+        "model": "gpt-5-2025-08-07"
+      },
+      "retrieve_ms": 228.0,
+      "generate_ms": 12432.7,
+      "input_tokens": 2084,
+      "output_tokens": 982,
+      "error": null,
+      "passed": true,
+      "refusal_ok": true
+    },
+    {
+      "id": "parental_leave_max_with_pto",
+      "category": "multi_doc",
+      "question": "What is the maximum total paid leave period available to a primary caregiver, including any PTO top-up?",
+      "expects_refusal": false,
+      "expected_sources": [
+        "parental_leave.md",
+        "pto_policy.md"
+      ],
+      "retrieved": [
+        {
+          "source": "parental_leave.md",
+          "chunk_index": 0,
+          "distance": 0.9123
+        },
+        {
+          "source": "pto_policy.md",
+          "chunk_index": 0,
+          "distance": 1.0074
+        },
+        {
+          "source": "health_benefits.md",
+          "chunk_index": 0,
+          "distance": 1.3624
+        },
+        {
+          "source": "compensation_equity.md",
+          "chunk_index": 1,
+          "distance": 1.3935
+        },
+        {
+          "source": "remote_work.md",
+          "chunk_index": 0,
+          "distance": 1.3964
+        }
+      ],
+      "retrieval": {
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "precision": 0.4,
+        "missing_sources": []
+      },
+      "answer": "26 weeks.\n\nThe primary caregiver\u2019s base entitlement is 16 weeks of paid parental leave at 100% of base salary; employees may extend that period by using accrued PTO, but \u201cthe total combined paid period (base parental leave plus PTO top\u2011up) may not exceed 26 weeks\u201d (parental_leave.md). This policy applies to full\u2011time employees who have completed at least 6 months of continuous employment (parental_leave.md). Note that parental leave must be taken as a continuous block unless a return\u2011to\u2011work agreement is approved, and intermittent parental leave is not available (parental_leave.md). PTO accrues at 1.5 days per month (18 days/year) and PTO balances are capped at 30 days, which may limit how much PTO is available to top up leave (pto_policy.md).",
+      "refused": false,
+      "keyword": {
+        "passed": true,
+        "failures": []
+      },
+      "judge": {
+        "correct": "PASS",
+        "correct_reason": "The answer explicitly states the base entitlement is 16 weeks and that PTO top-up can extend it to a maximum total of 26 weeks, matching the rubric.",
+        "grounded": "PASS",
+        "grounded_reason": "All details (16-week base, 26-week cap, eligibility, continuous block requirement, PTO accrual and cap) are supported by the provided context.",
+        "model": "gpt-5-2025-08-07"
+      },
+      "retrieve_ms": 254.2,
+      "generate_ms": 10849.1,
+      "input_tokens": 2040,
+      "output_tokens": 1073,
+      "error": null,
+      "passed": true,
+      "refusal_ok": true
+    },
+    {
+      "id": "remote_security_requirements",
+      "category": "multi_doc",
+      "question": "What device and network security rules must remote employees follow?",
+      "expects_refusal": false,
+      "expected_sources": [
+        "remote_work.md",
+        "information_security.md"
+      ],
+      "retrieved": [
+        {
+          "source": "information_security.md",
+          "chunk_index": 0,
+          "distance": 0.8552
+        },
+        {
+          "source": "remote_work.md",
+          "chunk_index": 0,
+          "distance": 0.9997
+        },
+        {
+          "source": "code_of_conduct.md",
+          "chunk_index": 0,
+          "distance": 1.2077
+        },
+        {
+          "source": "termination_offboarding.md",
+          "chunk_index": 1,
+          "distance": 1.3448
+        },
+        {
+          "source": "expense_reimbursement.md",
+          "chunk_index": 0,
+          "distance": 1.3689
+        }
+      ],
+      "retrieval": {
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "precision": 0.4,
+        "missing_sources": []
+      },
+      "answer": "Direct answer: Remote employees must use only company\u2011issued or approved devices for work, enable required device encryption, report lost or damaged devices within 24 hours, use the company VPN whenever accessing internal systems (never use public Wi\u2011Fi without VPN), ensure home routers use WPA2 or WPA3, keep workstations locked when unattended, and follow MFA/no\u2011credential\u2011sharing rules. (information_security.md; remote_work.md; code_of_conduct.md)\n\nDetails from the handbook:\n- Device use: \"Only company\u2011issued devices may be used to access production systems, internal source code repositories, or any system containing customer data.\" Personal devices may be used for company email and calendar via approved mobile apps (Outlook, Google Workspace mobile) only. (information_security.md; remote_work.md)\n- Encryption and verification: \"Employees must enable full\u2011disk encryption on company\u2011issued laptops. IT verifies encryption compliance quarterly.\" (information_security.md)\n- Lost/damaged devices: Lost or stolen (or damaged) devices must be reported to IT within 24 hours. (information_security.md; remote_work.md)\n- VPN and public networks: \"Employees must use the company VPN whenever accessing internal systems from outside a Northwind Robotics office.\" \"Public Wi\u2011Fi (coffee shops, airports, hotels) must never be used without VPN active.\" (information_security.md; remote_work.md)\n- Home network: \"Home networks must have WPA2 or WPA3 encryption enabled on the router.\" This requirement \"applies to remote employees at all times.\" (information_security.md)\n- Access controls: \"Employees must not share login credentials under any circumstances. Multi\u2011factor authentication (MFA) is required on all company accounts.\" (information_security.md)\n- Additional remote rules and consequences: Remote employees \"must comply with all requirements in the Information Security Policy,\" must keep workstation screens locked when unattended, and failure to follow these requirements may result in loss of remote work privileges or disciplinary action. (remote_work.md; code_of_conduct.md)",
+      "refused": false,
+      "keyword": {
+        "passed": true,
+        "failures": []
+      },
+      "judge": {
+        "correct": "PASS",
+        "correct_reason": "Covers company-issued device use and full-disk encryption, and specifies VPN is required for internal systems and that public Wi\u2011Fi must not be used without VPN, satisfying all rubric points.",
+        "grounded": "PASS",
+        "grounded_reason": "Every claim is supported by the cited Information Security and Remote Work policies, with direct quotes and no unsupported details.",
+        "model": "gpt-5-2025-08-07"
+      },
+      "retrieve_ms": 282.8,
+      "generate_ms": 16402.6,
+      "input_tokens": 2128,
+      "output_tokens": 1953,
+      "error": null,
+      "passed": true,
+      "refusal_ok": true
+    },
+    {
+      "id": "pto_payout_on_resignation",
+      "category": "multi_doc",
+      "question": "If I resign with 15 days of unused PTO, how much of it is paid out and when?",
+      "expects_refusal": false,
+      "expected_sources": [
+        "pto_policy.md",
+        "termination_offboarding.md"
+      ],
+      "retrieved": [
+        {
+          "source": "pto_policy.md",
+          "chunk_index": 0,
+          "distance": 0.9104
+        },
+        {
+          "source": "termination_offboarding.md",
+          "chunk_index": 0,
+          "distance": 1.0964
+        },
+        {
+          "source": "termination_offboarding.md",
+          "chunk_index": 1,
+          "distance": 1.0994
+        },
+        {
+          "source": "compensation_equity.md",
+          "chunk_index": 1,
+          "distance": 1.2823
+        },
+        {
+          "source": "parental_leave.md",
+          "chunk_index": 0,
+          "distance": 1.3111
+        }
+      ],
+      "retrieval": {
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "precision": 0.6,
+        "missing_sources": []
+      },
+      "answer": "You would be paid out for 10 days of PTO; the remaining 5 days would be forfeited (you are paid only up to the 10-day carryover cap). (pto_policy.md)\n\nThat payout is included in your final paycheck, which is issued on your last day or within the timeframe required by applicable state law, whichever is sooner. (termination_offboarding.md)",
+      "refused": false,
+      "keyword": {
+        "passed": true,
+        "failures": []
+      },
+      "judge": {
+        "correct": "PASS",
+        "correct_reason": "The answer states the 10-day payout cap with 5 days forfeited and specifies final pay is issued on the last day or within the timeframe required by state law, whichever is sooner.",
+        "grounded": "PASS",
+        "grounded_reason": "Both the 10-day payout cap and the final paycheck timing are explicitly supported by the provided PTO and Termination and Offboarding policies.",
+        "model": "gpt-5-2025-08-07"
+      },
+      "retrieve_ms": 240.8,
+      "generate_ms": 8366.5,
+      "input_tokens": 1691,
+      "output_tokens": 534,
+      "error": null,
+      "passed": true,
+      "refusal_ok": true
+    },
+    {
+      "id": "stipend_claim_process",
+      "category": "multi_doc",
+      "question": "How do I claim the home office stipend, and is there a deadline?",
+      "expects_refusal": false,
+      "expected_sources": [
+        "remote_work.md",
+        "expense_reimbursement.md"
+      ],
+      "retrieved": [
+        {
+          "source": "expense_reimbursement.md",
+          "chunk_index": 0,
+          "distance": 1.2079
+        },
+        {
+          "source": "compensation_equity.md",
+          "chunk_index": 1,
+          "distance": 1.3568
+        },
+        {
+          "source": "termination_offboarding.md",
+          "chunk_index": 1,
+          "distance": 1.3678
+        },
+        {
+          "source": "remote_work.md",
+          "chunk_index": 0,
+          "distance": 1.4021
+        },
+        {
+          "source": "health_benefits.md",
+          "chunk_index": 0,
+          "distance": 1.4639
+        }
+      ],
+      "retrieval": {
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "precision": 0.4,
+        "missing_sources": []
+      },
+      "answer": "Direct answer: Claim the one-time $750 home office stipend by submitting receipts through Workday (Expenses > New Expense Report) using the category \"Home Office Setup,\" and you must submit expenses within 30 days of being incurred. (expense_reimbursement.md, remote_work.md)\n\nDetails:\n- Who it's for: the stipend is a one-time $750 reimbursement for new remote-eligible employees. (expense_reimbursement.md; remote_work.md)\n- What to submit: attach itemized receipts (collect itemized receipts for all expenses over $25) as PDF or image files. (expense_reimbursement.md)\n- Approval and timing: manager approval is required; approved reimbursements are processed within 2 pay cycles of manager approval. Remote policy also states it is paid as a reimbursement after receipt submission. (expense_reimbursement.md; remote_work.md)\n- Eligible items and exclusions: eligible items include monitors, keyboards, ergonomic accessories; personal entertainment equipment (TVs, gaming peripherals) is not eligible. (expense_reimbursement.md)",
+      "refused": false,
+      "keyword": {
+        "passed": true,
+        "failures": []
+      },
+      "judge": {
+        "correct": "PASS",
+        "correct_reason": "It tells the employee to submit through Workday under the Home Office Setup category with receipts and specifies the 30-day submission deadline.",
+        "grounded": "PASS",
+        "grounded_reason": "All claims (process in Workday, Home Office Setup category, $750 amount, receipts, 30-day deadline, manager approval, processing time, eligibility, and item inclusions/exclusions) are explicitly supported by the provided context.",
+        "model": "gpt-5-2025-08-07"
+      },
+      "retrieve_ms": 270.9,
+      "generate_ms": 8849.5,
+      "input_tokens": 1759,
+      "output_tokens": 855,
+      "error": null,
+      "passed": true,
+      "refusal_ok": true
+    },
+    {
+      "id": "equity_vesting_during_leave",
+      "category": "multi_doc",
+      "question": "Do my RSUs keep vesting while I'm on parental leave, and what about a long unpaid leave?",
+      "expects_refusal": false,
+      "expected_sources": [
+        "parental_leave.md",
+        "compensation_equity.md"
+      ],
+      "retrieved": [
+        {
+          "source": "parental_leave.md",
+          "chunk_index": 0,
+          "distance": 1.0553
+        },
+        {
+          "source": "pto_policy.md",
+          "chunk_index": 0,
+          "distance": 1.1669
+        },
+        {
+          "source": "compensation_equity.md",
+          "chunk_index": 0,
+          "distance": 1.1795
+        },
+        {
+          "source": "termination_offboarding.md",
+          "chunk_index": 1,
+          "distance": 1.1816
+        },
+        {
+          "source": "health_benefits.md",
+          "chunk_index": 0,
+          "distance": 1.2495
+        }
+      ],
+      "retrieval": {
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "precision": 0.4,
+        "missing_sources": []
+      },
+      "answer": "Yes \u2014 your RSUs keep vesting during paid parental leave; vesting pauses if you go on unpaid leave longer than 30 days. (compensation_equity.md, parental_leave.md)\n\nDetails:\n- Equity vesting continues during paid leave, including paid parental leave. (compensation_equity.md; parental_leave.md)\n- You can extend paid parental leave by using accrued PTO, but the combined paid period may not exceed 26 weeks for the primary caregiver or 10 weeks for the secondary caregiver, which would allow vesting to continue during that paid period. (parental_leave.md; pto_policy.md)\n- If you take unpaid leave and it exceeds 30 days, equity vesting pauses for the unpaid period. (compensation_equity.md)",
+      "refused": false,
+      "keyword": {
+        "passed": true,
+        "failures": []
+      },
+      "judge": {
+        "correct": "PASS",
+        "correct_reason": "The answer explicitly states that vesting continues during paid (including paid parental) leave and that vesting pauses during unpaid leave exceeding 30 days, satisfying all rubric requirements.",
+        "grounded": "PASS",
+        "grounded_reason": "Every claim made, including vesting rules and PTO top-up limits, is directly supported by the provided context documents.",
+        "model": "gpt-5-2025-08-07"
+      },
+      "retrieve_ms": 766.9,
+      "generate_ms": 8076.1,
+      "input_tokens": 2210,
+      "output_tokens": 803,
+      "error": null,
+      "passed": true,
+      "refusal_ok": true
+    },
+    {
+      "id": "leave_notice_ambiguous",
+      "category": "ambiguous",
+      "question": "How much advance notice is required when an employee wants to take leave?",
+      "expects_refusal": false,
+      "expected_sources": [
+        "pto_policy.md",
+        "parental_leave.md"
+      ],
+      "retrieved": [
+        {
+          "source": "parental_leave.md",
+          "chunk_index": 0,
+          "distance": 1.0875
+        },
+        {
+          "source": "pto_policy.md",
+          "chunk_index": 0,
+          "distance": 1.1847
+        },
+        {
+          "source": "termination_offboarding.md",
+          "chunk_index": 0,
+          "distance": 1.2662
+        },
+        {
+          "source": "termination_offboarding.md",
+          "chunk_index": 1,
+          "distance": 1.2958
+        },
+        {
+          "source": "remote_work.md",
+          "chunk_index": 0,
+          "distance": 1.3058
+        }
+      ],
+      "retrieval": {
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "precision": 0.4,
+        "missing_sources": []
+      },
+      "answer": "It depends on the type of leave:\n\n- Parental leave: Employees should notify HR and their manager at least 8 weeks before the expected leave start date. For unexpected events (e.g., premature birth, emergency foster placement), notification must occur \"as soon as practicable.\" This parental-leave notice applies to full-time employees who have completed at least 6 months of continuous employment. (parental_leave.md)\n\n- PTO (vacation/personal/short-term illness): PTO requests must be submitted in Workday at least 2 business days in advance for absences of 1\u20132 days, 5 business days in advance for absences of 3\u20134 days, and 10 business days in advance for absences of 5+ days. Manager approval is required and requests may be denied for operational needs. Note: employees in their first 90 days may not use accrued PTO until the probationary period ends except for documented medical necessity. (pto_policy.md)",
+      "refused": false,
+      "keyword": {
+        "passed": true,
+        "failures": []
+      },
+      "judge": {
+        "correct": "PASS",
+        "correct_reason": "The answer distinguishes PTO notice (2/5/10 business days by duration) from parental leave notice (8 weeks) and addresses both types as required.",
+        "grounded": "PASS",
+        "grounded_reason": "All stated notice periods, conditions for unexpected events, manager approval, probationary PTO restriction, and applicability to full-time employees are explicitly supported by the provided context.",
+        "model": "gpt-5-2025-08-07"
+      },
+      "retrieve_ms": 286.4,
+      "generate_ms": 8270.3,
+      "input_tokens": 2056,
+      "output_tokens": 783,
+      "error": null,
+      "passed": true,
+      "refusal_ok": true
+    },
+    {
+      "id": "leave_types_ambiguous",
+      "category": "ambiguous",
+      "question": "What types of leave does Northwind Robotics offer employees?",
+      "expects_refusal": false,
+      "expected_sources": [
+        "pto_policy.md",
+        "parental_leave.md"
+      ],
+      "retrieved": [
+        {
+          "source": "pto_policy.md",
+          "chunk_index": 0,
+          "distance": 0.6992
+        },
+        {
+          "source": "health_benefits.md",
+          "chunk_index": 0,
+          "distance": 0.7165
+        },
+        {
+          "source": "parental_leave.md",
+          "chunk_index": 0,
+          "distance": 0.7286
+        },
+        {
+          "source": "remote_work.md",
+          "chunk_index": 0,
+          "distance": 0.7493
+        },
+        {
+          "source": "compensation_equity.md",
+          "chunk_index": 0,
+          "distance": 0.7726
+        }
+      ],
+      "retrieval": {
+        "hit": true,
+        "recall": 1.0,
+        "reciprocal_rank": 1.0,
+        "precision": 0.4,
+        "missing_sources": []
+      },
+      "answer": "Direct answer: Northwind Robotics offers paid time off (PTO \u2014 covering vacation, personal days, and short\u2011term illness), paid parental leave (primary and secondary caregiver entitlements, including adoption/foster), company holidays (11 per year, paid), and unpaid leave (employees may take unpaid leave and may continue benefits by paying premiums). PTO can also be used to top up paid parental leave subject to combined\u2011leave caps. (pto_policy.md; parental_leave.md; health_benefits.md; compensation_equity.md)\n\nDetails:\n- PTO: Full\u2011time employees accrue 1.5 days of PTO per month (18 days/year), beginning on day one; part\u2011time employees receive prorated PTO. Balances are capped at 30 days (accrual pauses at the cap). Up to 10 days may be carried into the next calendar year; any balance above 10 days is forfeited on Jan 1. Employees in their first 90 days accrue PTO but generally may not use it until probation ends except for documented medical necessity. PTO requests require advance notice (2\u201310 business days depending on length) and manager approval. Unused PTO is paid out at separation only up to the carryover cap (10 days). (pto_policy.md)\n\n- Paid parental leave: Applies to full\u2011time employees with at least 6 months\u2019 continuous employment. The primary caregiver receives 16 weeks at 100% base salary; the secondary caregiver receives 6 weeks at 100% base salary. Leave must be taken as a continuous block unless HR approves otherwise. Adoption and foster placement receive the same base entitlements; up to 3 days for pre\u2011placement appointments is provided and is drawn from PTO. Employees should notify HR and their manager at least 8 weeks before expected leave. (parental_leave.md)\n\n- PTO top\u2011up for parental leave: Employees may use accrued PTO to extend paid parental leave; the PTO and Vacation Policy governs accrual/eligibility. The combined paid period may not exceed 26 weeks for the primary caregiver or 10 weeks for the secondary caregiver. (parental_leave.md; pto_policy.md)\n\n- Holidays and benefits: The company observes 11 company holidays per year, which are separate from PTO. Health, dental, and vision benefits continue during paid leave; during unpaid leave employees may continue coverage by paying the full premium (COBRA or direct\u2011pay). Equity vesting continues during paid leave and pauses during unpaid leave exceeding 30 days. (pto_policy.md; health_benefits.md; compensation_equity.md)",
+      "refused": false,
+      "keyword": {
+        "passed": true,
+        "failures": []
+      },
+      "judge": {
+        "correct": "PASS",
+        "correct_reason": "The answer explicitly mentions PTO/vacation leave and parental leave and distinguishes them, satisfying the rubric.",
+        "grounded": "FAIL",
+        "grounded_reason": "It introduces unsupported claims that company holidays are paid and that the company offers unpaid leave, which are not stated in the provided context.",
+        "model": "gpt-5-2025-08-07"
+      },
+      "retrieve_ms": 296.0,
+      "generate_ms": 16765.3,
+      "input_tokens": 2508,
+      "output_tokens": 1746,
+      "error": null,
+      "passed": true,
+      "refusal_ok": true
+    },
+    {
+      "id": "out_of_scope_ticker",
+      "category": "out_of_scope",
+      "question": "What is Northwind Robotics' stock ticker symbol?",
+      "expects_refusal": true,
+      "expected_sources": [],
+      "retrieved": [
+        {
+          "source": "compensation_equity.md",
+          "chunk_index": 0,
+          "distance": 0.9885
+        },
+        {
+          "source": "information_security.md",
+          "chunk_index": 0,
+          "distance": 1.1407
+        },
+        {
+          "source": "health_benefits.md",
+          "chunk_index": 0,
+          "distance": 1.1583
+        },
+        {
+          "source": "code_of_conduct.md",
+          "chunk_index": 0,
+          "distance": 1.1684
+        },
+        {
+          "source": "remote_work.md",
+          "chunk_index": 0,
+          "distance": 1.2301
+        }
+      ],
+      "retrieval": null,
+      "answer": "I don't have that information in the handbook.",
+      "refused": true,
+      "keyword": {
+        "passed": true,
+        "failures": []
+      },
+      "judge": {
+        "correct": "PASS",
+        "correct_reason": "The answer states the information is not available in the handbook and does not speculate, satisfying the rubric.",
+        "grounded": "PASS",
+        "grounded_reason": "The response makes no unsupported factual claims and is consistent with the provided context, which does not include a stock ticker symbol.",
+        "model": "gpt-5-2025-08-07"
+      },
+      "retrieve_ms": 228.0,
+      "generate_ms": 2995.6,
+      "input_tokens": 2569,
+      "output_tokens": 146,
+      "error": null,
+      "passed": true,
+      "refusal_ok": true
+    },
+    {
+      "id": "out_of_scope_headcount",
+      "category": "out_of_scope",
+      "question": "How many employees does Northwind Robotics have?",
+      "expects_refusal": true,
+      "expected_sources": [],
+      "retrieved": [
+        {
+          "source": "compensation_equity.md",
+          "chunk_index": 0,
+          "distance": 0.8939
+        },
+        {
+          "source": "information_security.md",
+          "chunk_index": 0,
+          "distance": 0.9613
+        },
+        {
+          "source": "health_benefits.md",
+          "chunk_index": 0,
+          "distance": 0.9875
+        },
+        {
+          "source": "remote_work.md",
+          "chunk_index": 0,
+          "distance": 0.9905
+        },
+        {
+          "source": "code_of_conduct.md",
+          "chunk_index": 0,
+          "distance": 1.0394
+        }
+      ],
+      "retrieval": null,
+      "answer": "I don't have that information in the handbook.",
+      "refused": true,
+      "keyword": {
+        "passed": true,
+        "failures": []
+      },
+      "judge": {
+        "correct": "PASS",
+        "correct_reason": "It clearly states that the information is not available in the handbook and does not speculate or provide a number.",
+        "grounded": "PASS",
+        "grounded_reason": "None of the provided handbook excerpts include the company\u2019s employee count, so saying the information isn\u2019t in the handbook makes no unsupported factual claims.",
+        "model": "gpt-5-2025-08-07"
+      },
+      "retrieve_ms": 841.7,
+      "generate_ms": 2798.8,
+      "input_tokens": 2568,
+      "output_tokens": 146,
+      "error": null,
+      "passed": true,
+      "refusal_ok": true
+    },
+    {
+      "id": "out_of_scope_401k_match",
+      "category": "out_of_scope",
+      "question": "What is the company's 401(k) matching contribution?",
+      "expects_refusal": true,
+      "expected_sources": [],
+      "retrieved": [
+        {
+          "source": "compensation_equity.md",
+          "chunk_index": 0,
+          "distance": 1.1279
+        },
+        {
+          "source": "health_benefits.md",
+          "chunk_index": 0,
+          "distance": 1.2047
+        },
+        {
+          "source": "expense_reimbursement.md",
+          "chunk_index": 0,
+          "distance": 1.3691
+        },
+        {
+          "source": "remote_work.md",
+          "chunk_index": 0,
+          "distance": 1.3737
+        },
+        {
+          "source": "pto_policy.md",
+          "chunk_index": 0,
+          "distance": 1.3806
+        }
+      ],
+      "retrieval": null,
+      "answer": "I don't have that information in the handbook.",
+      "refused": true,
+      "keyword": {
+        "passed": true,
+        "failures": []
+      },
+      "judge": {
+        "correct": "PASS",
+        "correct_reason": "The answer states the information is not in the handbook and does not invent any match percentage.",
+        "grounded": "PASS",
+        "grounded_reason": "The context includes no 401(k) or retirement plan details, so saying the handbook lacks this information is supported by the excerpts.",
+        "model": "gpt-5-2025-08-07"
+      },
+      "retrieve_ms": 302.0,
+      "generate_ms": 1988.6,
+      "input_tokens": 2583,
+      "output_tokens": 82,
+      "error": null,
+      "passed": true,
+      "refusal_ok": true
+    },
+    {
+      "id": "false_premise_sabbatical",
+      "category": "false_premise",
+      "question": "How many weeks of sabbatical do employees get after five years of service?",
+      "expects_refusal": true,
+      "expected_sources": [],
+      "retrieved": [
+        {
+          "source": "pto_policy.md",
+          "chunk_index": 0,
+          "distance": 1.2497
+        },
+        {
+          "source": "parental_leave.md",
+          "chunk_index": 0,
+          "distance": 1.2881
+        },
+        {
+          "source": "termination_offboarding.md",
+          "chunk_index": 0,
+          "distance": 1.2944
+        },
+        {
+          "source": "compensation_equity.md",
+          "chunk_index": 1,
+          "distance": 1.3303
+        },
+        {
+          "source": "termination_offboarding.md",
+          "chunk_index": 1,
+          "distance": 1.3548
+        }
+      ],
+      "retrieval": null,
+      "answer": "I don't have that information in the handbook.",
+      "refused": true,
+      "keyword": {
+        "passed": true,
+        "failures": []
+      },
+      "judge": {
+        "correct": "PASS",
+        "correct_reason": "The answer clearly states the information is not in the handbook and does not invent or repurpose any sabbatical details.",
+        "grounded": "PASS",
+        "grounded_reason": "It makes no specific factual claims about policies and only notes the absence of information, which is consistent with the provided context.",
+        "model": "gpt-5-2025-08-07"
+      },
+      "retrieve_ms": 266.3,
+      "generate_ms": 2333.7,
+      "input_tokens": 1686,
+      "output_tokens": 82,
+      "error": null,
+      "passed": true,
+      "refusal_ok": true
+    }
+  ]
+}

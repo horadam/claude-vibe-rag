@@ -5,5 +5,8 @@ __pycache__/
 .venv/
 *.egg-info/
 dist/
-evals/runs/
+# Eval runs stay local, except the committed samples shown on the deployed /evals.
+evals/runs/*
+!evals/runs/20261109T143938Z.json
+!evals/runs/20261109T150357Z-prompt-v2.json
 .claude/

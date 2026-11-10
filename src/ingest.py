@@ -1,5 +1,6 @@
-"""Chunking, embedding, and Chroma upsert for the HR handbook corpus."""
+"""Chunking, embedding, Chroma upsert and JSON export for the HR handbook corpus."""
 
+import json
 import logging
 from functools import cache
 from pathlib import Path
@@ -17,6 +18,7 @@ from src.config import (
     CORPUS_DIR,
     EMBED_BATCH_SIZE,
     EMBEDDING_MODEL,
+    INDEX_FILE,
     TIKTOKEN_ENCODING,
     require_env,
 )
@@ -152,3 +154,37 @@ def ingest_corpus(corpus_dir: Path = CORPUS_DIR) -> None:
     )
 
     print(f"\nDone. {total_chunks} chunks, {total_tokens} tokens ingested into '{COLLECTION_NAME}'.")
+    export_index()
+
+
+def export_index(path: Path = INDEX_FILE) -> None:
+    """Write every chunk in the Chroma collection, with its embedding, to a JSON file.
+
+    The server searches this file instead of Chroma, so it can run on a
+    read-only host without Chroma installed.
+    """
+    chroma = chromadb.PersistentClient(path=CHROMA_DIR)
+    collection = chroma.get_collection(COLLECTION_NAME)
+    stored = collection.get(include=["documents", "metadatas", "embeddings"])
+
+    chunks = [
+        {
+            "doc_id": doc_id,
+            "text": text,
+            "source": meta["source"],
+            "chunk_index": meta["chunk_index"],
+            "title": meta["title"],
+            "embedding": [float(x) for x in embedding],
+        }
+        for doc_id, text, meta, embedding in zip(
+            stored["ids"], stored["documents"], stored["metadatas"], stored["embeddings"], strict=True
+        )
+    ]
+    chunks.sort(key=lambda c: (c["source"], c["chunk_index"]))
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps({"embedding_model": EMBEDDING_MODEL, "chunks": chunks}, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    print(f"Exported {len(chunks)} chunks to {path}.")
