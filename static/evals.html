@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eval results · Northwind Robotics</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/app.css" />
+  <script src="/static/marked.min.js"></script>
+  <script src="/static/purify.min.js"></script>
+  <style>
+    body { min-height: 100vh; }
+    .page { max-width: 1080px; margin: 0 auto; padding: 32px 20px 64px; }
+    h1 { font-size: 24px; letter-spacing: -.02em; }
+    .lede { color: var(--muted); font-size: 14.5px; line-height: 1.6; margin-top: 6px; max-width: 760px; }
+    h2 {
+      font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+      color: var(--faint); margin: 30px 0 10px;
+    }
+
+    .controls { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: end; margin-top: 22px; }
+    .field { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--muted); font-weight: 500; }
+    select {
+      font: inherit; font-size: 13.5px; color: var(--text); background: var(--surface);
+      border: 1px solid var(--border-strong); border-radius: 8px; padding: 7px 10px; min-width: 240px; max-width: 100%;
+    }
+
+    .run-meta {
+      margin-top: 16px; font-size: 13px; color: var(--muted); line-height: 1.7;
+      display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center;
+    }
+    .run-meta strong { color: var(--text-2); font-weight: 600; }
+
+    /* ── Stat tiles ── */
+    .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+    .tile {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .tile-label { font-size: 12.5px; color: var(--muted); }
+    .tile-value { font-size: 24px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+    .tile-sub { font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+    .delta { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; display: inline-flex; gap: 3px; align-items: center; }
+    .delta.better { color: var(--good); }
+    .delta.worse { color: var(--bad); }
+    .delta.same { color: var(--faint); font-weight: 500; }
+    .tile-help { font-size: 11.5px; color: var(--faint); line-height: 1.4; margin-top: 2px; }
+
+    /* ── Tables ── */
+    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+    th {
+      text-align: left; font-size: 11.5px; font-weight: 600; color: var(--muted);
+      padding: 9px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--surface-2);
+    }
+    td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: top; color: var(--text-2); }
+    tr:last-child td { border-bottom: none; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+    .case-row { cursor: pointer; }
+    .case-row:hover td { background: var(--surface-2); }
+    .case-row td:first-child { font-family: var(--mono); font-size: 12.5px; color: var(--text); }
+    .expand {
+      background: none; border: none; font: inherit; color: inherit; cursor: pointer; text-align: left;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .expand::before {
+      content: ''; width: 6px; height: 6px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+      transform: rotate(-45deg); transition: transform .15s; flex-shrink: 0;
+    }
+    .expand[aria-expanded="true"]::before { transform: rotate(45deg); }
+    .chips { display: flex; gap: 4px; flex-wrap: wrap; }
+    .flip { font-size: 11.5px; font-weight: 600; margin-top: 4px; }
+    .flip.better { color: var(--good); }
+    .flip.worse { color: var(--bad); }
+
+    .detail-row > td { background: var(--surface-2); padding: 14px 16px 18px; }
+    .detail { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 18px; }
+    .detail h3 { font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--faint); margin-bottom: 6px; }
+    .detail section + section { margin-top: 14px; }
+    .question { font-weight: 600; color: var(--text); font-size: 14px; }
+    .answer {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      padding: 10px 12px; font-size: 13.5px; line-height: 1.6; color: var(--text);
+    }
+    .problems { list-style: none; display: flex; flex-direction: column; gap: 5px; font-size: 13px; }
+    .problems li { padding-left: 14px; position: relative; line-height: 1.5; }
+    .problems li::before { content: '–'; position: absolute; left: 0; color: var(--faint); }
+    .retrieved { list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+    .retrieved li { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .retrieved .mono { color: var(--text-2); }
+    .retrieved .dist { color: var(--faint); font-variant-numeric: tabular-nums; }
+    .muted { color: var(--faint); }
+
+    .empty {
+      background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 12px;
+      padding: 28px; margin-top: 24px; color: var(--text-2); line-height: 1.6; font-size: 14.5px;
+    }
+    .empty code { font-family: var(--mono); background: var(--surface-3); padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+    .empty pre { margin-top: 10px; }
+
+    @media (max-width: 760px) {
+      .page { padding: 20px 16px 48px; }
+      .detail { grid-template-columns: 1fr; }
+      select { min-width: 0; width: 100%; }
+      .field { flex: 1 1 100%; }
+      .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .tile-value { font-size: 20px; }
+      .hide-sm { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </span>
+      <span class="brand-text">
+        <span class="brand-title">Northwind Robotics</span>
+        <span class="brand-sub">HR Assistant</span>
+      </span>
+    </a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/">Assistant</a>
+      <a href="/evals" aria-current="page">Evals</a>
+    </nav>
+  </header>
+
+  <main class="page">
+    <h1>Eval results</h1>
+    <p class="lede">
+      Each run sends the labelled question set through the real pipeline. Retrieval is scored against the
+      documents each answer needs; answers are checked for required facts and correct refusals, and optionally
+      graded by a separate judge model for correctness and grounding in the retrieved text.
+    </p>
+    <div id="app"><p class="lede">Loading runs…</p></div>
+  </main>
+
+  <script>
+    const app = document.getElementById('app');
+    const state = { runs: [], current: null, baseline: null, failuresOnly: false, open: new Set() };
+
+    const PASS = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const FAIL = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 4.5l7 7m0-7l-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+    const WARN = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5l6 11H2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 6.5v3M8 11.6v.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined && text !== null) node.textContent = text;
+      return node;
+    }
+    function chip(kind, label) {
+      const c = el('span', `chip ${kind}`);
+      c.innerHTML = kind === 'good' ? PASS : kind === 'bad' ? FAIL : kind === 'warn' ? WARN : '';
+      c.append(label);
+      return c;
+    }
+    const pct = x => x === null || x === undefined ? '—' : `${Math.round(x * 100)}%`;
+    const dec = x => x === null || x === undefined ? '—' : x.toFixed(2);
+    const secs = ms => ms === null || ms === undefined ? '—' : `${(ms / 1000).toFixed(2)} s`;
+    const frac = (a, b) => b ? a / b : null;
+    const when = iso => new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+
+    async function getJSON(url) {
+      const res = await fetch(url);
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.detail || `${url} returned ${res.status}`);
+      return body;
+    }
+
+    // ── Metrics ────────────────────────────────────────────────────────────
+    // higherIsBetter decides whether a positive delta is shown as better.
+    function metrics(summary, k) {
+      const s = summary;
+      return [
+        { key: 'answers', label: 'Answer checks', value: frac(s.answers.passed, s.answers.total), fmt: pct,
+          sub: `${s.answers.passed} / ${s.answers.total} cases`, help: 'Required facts present, refused only when it should.', higher: true },
+        { key: 'correct', label: 'Judge: correct', value: frac(s.judge.correct, s.judge.total), fmt: pct,
+          sub: s.judge.total ? `${s.judge.correct} / ${s.judge.total} · ${s.judge.errors} errors` : 'not run', help: 'Meets the human-written rubric.', higher: true },
+        { key: 'grounded', label: 'Judge: grounded', value: frac(s.judge.grounded, s.judge.total), fmt: pct,
+          sub: s.judge.total ? `${s.judge.grounded} / ${s.judge.total}` : 'not run', help: 'Every claim is supported by the retrieved text.', higher: true },
+        { key: 'recall', label: `Retrieval recall @${k}`, value: s.retrieval.recall, fmt: dec,
+          sub: `${s.retrieval.cases} cases with labels`, help: 'Share of needed documents that were retrieved.', higher: true },
+        { key: 'mrr', label: 'Retrieval MRR', value: s.retrieval.mrr, fmt: dec,
+          sub: `hit rate ${dec(s.retrieval.hit_rate)}`, help: '1 = a needed document ranked first every time.', higher: true },
+        { key: 'precision', label: `Context precision @${k}`, value: s.retrieval.precision, fmt: dec,
+          sub: 'relevant chunks / retrieved', help: 'Low means the prompt carries unrelated text.', higher: true },
+        { key: 'refusals', label: 'Correct refusals', value: frac(s.refusal.correct_refusals, s.refusal.should_refuse), fmt: pct,
+          sub: `${s.refusal.correct_refusals} / ${s.refusal.should_refuse} unanswerable`, help: 'Declined questions the handbook can\'t answer.', higher: true },
+        { key: 'false_refusals', label: 'False refusals', value: frac(s.refusal.false_refusals, s.refusal.answerable), fmt: pct,
+          sub: `${s.refusal.false_refusals} / ${s.refusal.answerable} answerable`, help: 'Refused a question it could answer. Lower is better.', higher: false },
+      ];
+    }
+
+    function deltaNode(metric, baseValue) {
+      if (metric.value === null || baseValue === null || baseValue === undefined) return null;
+      const diff = metric.value - baseValue;
+      const span = el('span', 'delta');
+      if (Math.abs(diff) < 1e-9) {
+        span.classList.add('same');
+        span.textContent = 'no change';
+        return span;
+      }
+      const better = metric.higher ? diff > 0 : diff < 0;
+      span.classList.add(better ? 'better' : 'worse');
+      const shown = metric.fmt === pct ? `${Math.round(Math.abs(diff) * 100)} pts` : Math.abs(diff).toFixed(2);
+      span.textContent = `${diff > 0 ? '▲' : '▼'} ${shown} ${better ? 'better' : 'worse'}`;
+      return span;
+    }
+
+    // ── Case helpers ───────────────────────────────────────────────────────
+    function caseFailed(c) {
+      return c.error || c.passed === false ||
+        (c.judge && (c.judge.correct !== 'PASS' || c.judge.grounded !== 'PASS')) ||
+        (c.retrieval && c.retrieval.recall < 1);
+    }
+
+    function problems(c) {
+      const out = [];
+      if (c.error) out.push(`Error: ${c.error}`);
+      if (c.keyword) c.keyword.failures.forEach(f => out.push(`Keyword ${f}`));
+      if (c.refusal_ok === false) out.push(c.refused ? 'Refused a question the handbook answers.' : 'Should have refused: the handbook has no answer.');
+      if (c.retrieval && c.retrieval.missing_sources.length) out.push(`Needed document not retrieved: ${c.retrieval.missing_sources.join(', ')}`);
+      if (c.judge && c.judge.correct !== 'PASS') out.push(`Judge (correct, ${c.judge.correct}): ${c.judge.correct_reason}`);
+      if (c.judge && c.judge.grounded !== 'PASS') out.push(`Judge (grounded, ${c.judge.grounded}): ${c.judge.grounded_reason}`);
+      return out;
+    }
+
+    function verdictChip(value, labels = ['Pass', 'Fail']) {
+      if (value === null || value === undefined) return chip('neutral', '—');
+      if (value === 'ERROR') return chip('warn', 'Judge error');
+      const ok = value === true || value === 'PASS';
+      return chip(ok ? 'good' : 'bad', ok ? labels[0] : labels[1]);
+    }
+
+    // ── Rendering ──────────────────────────────────────────────────────────
+    function renderEmpty() {
+      app.innerHTML = '';
+      const box = el('div', 'empty');
+      box.innerHTML = `<strong>No eval runs yet.</strong> Runs are saved to <code>evals/runs/</code> on this machine.
+        With API keys in <code>.env</code> and the corpus ingested, run:
+        <pre><code>uv run python eval_cli.py --judge</code></pre>`;
+      app.appendChild(box);
+    }
+
+    function runOption(run) {
+      const parts = [when(run.created_at)];
+      if (run.label) parts.push(run.label);
+      parts.push(run.mode, `k=${run.top_k}`);
+      if (run.filtered) parts.push('subset');
+      return parts.join(' · ');
+    }
+
+    function renderControls() {
+      const controls = el('div', 'controls');
+
+      const runField = el('label', 'field', 'Run');
+      const runSelect = el('select');
+      state.runs.forEach(r => runSelect.add(new Option(runOption(r), r.run_id, false, r.run_id === state.current.run_id)));
+      runSelect.addEventListener('change', () => selectRun(runSelect.value, state.baseline?.run_id));
+      runField.appendChild(runSelect);
+
+      const baseField = el('label', 'field', 'Compare with');
+      const baseSelect = el('select');
+      baseSelect.add(new Option('No comparison', ''));
+      state.runs.filter(r => r.run_id !== state.current.run_id)
+        .forEach(r => baseSelect.add(new Option(runOption(r), r.run_id, false, r.run_id === state.baseline?.run_id)));
+      baseSelect.addEventListener('change', () => selectRun(state.current.run_id, baseSelect.value || null));
+      baseField.appendChild(baseSelect);
+
+      const showField = el('div', 'field');
+      showField.append('Cases');
+      const seg = el('div', 'segmented');
+      seg.setAttribute('role', 'group');
+      [['All', false], ['Problems only', true]].forEach(([label, value]) => {
+        const b = el('button', '', label);
+        b.type = 'button';
+        b.setAttribute('aria-pressed', String(state.failuresOnly === value));
+        b.addEventListener('click', () => { state.failuresOnly = value; render(); });
+        seg.appendChild(b);
+      });
+      showField.appendChild(seg);
+
+      controls.append(runField, baseField, showField);
+      return controls;
+    }
+
+    function renderMeta(record) {
+      const c = record.config;
+      const meta = el('div', 'run-meta');
+      const item = (label, value) => {
+        const span = el('span');
+        span.append(`${label} `);
+        span.appendChild(el('strong', '', value));
+        return span;
+      };
+      meta.append(
+        item('Generator', c.generation_model || '—'),
+        item('Judge', c.judge_model || 'not run'),
+        item('Embeddings', c.embedding_model),
+        item('Top-k', String(c.top_k)),
+        item('Chunks', `~${c.chunk_target_tokens} tokens`),
+        item('Commit', c.git.commit || 'unknown'),
+        item('Dataset', c.dataset_sha),
+      );
+      if (c.git.dirty) meta.appendChild(chip('warn', 'Uncommitted changes'));
+      if (Object.values(c.filters || {}).some(Boolean)) meta.appendChild(chip('warn', 'Subset of cases'));
+      if (state.baseline && state.baseline.config.dataset_sha !== c.dataset_sha) {
+        meta.appendChild(chip('warn', 'Compared run used a different question set'));
+      }
+      return meta;
+    }
+
+    function renderTiles(record) {
+      const k = record.config.top_k;
+      const current = metrics(record.summary, k);
+      const base = state.baseline ? Object.fromEntries(metrics(state.baseline.summary, state.baseline.config.top_k).map(m => [m.key, m.value])) : {};
+      const tiles = el('div', 'tiles');
+      current.forEach(m => {
+        const tile = el('div', 'tile');
+        tile.append(el('div', 'tile-label', m.label), el('div', 'tile-value', m.fmt(m.value)), el('div', 'tile-sub', m.sub));
+        const d = state.baseline ? deltaNode(m, base[m.key]) : null;
+        if (d) tile.appendChild(d);
+        tile.appendChild(el('div', 'tile-help', m.help));
+        tiles.appendChild(tile);
+      });
+
+      const s = record.summary;
+      const perf = el('div', 'run-meta');
+      perf.append(
+        `Retrieve p50 / p95: ${secs(s.latency_ms.retrieve_p50)} / ${secs(s.latency_ms.retrieve_p95)}`,
+        el('span', '', `Generate p50 / p95: ${secs(s.latency_ms.generate_p50)} / ${secs(s.latency_ms.generate_p95)}`),
+        el('span', '', `Tokens in / out: ${s.tokens.input.toLocaleString()} / ${s.tokens.output.toLocaleString()}`),
+        el('span', '', `${s.cases} cases · ${s.errors} errors`),
+      );
+      return [tiles, perf];
+    }
+
+    function renderCategories(record) {
+      const wrap = el('div', 'table-wrap');
+      const table = el('table');
+      table.innerHTML = `<thead><tr><th scope="col">Category</th><th class="num" scope="col">Cases</th>
+        <th class="num" scope="col">Answer checks</th><th class="num" scope="col">Judge correct</th>
+        <th class="num" scope="col">Judge grounded</th><th class="num" scope="col">Recall</th></tr></thead>`;
+      const tbody = el('tbody');
+      Object.entries(record.summary.by_category).forEach(([name, row]) => {
+        const tr = el('tr');
+        const judged = row.judged ? (n => `${n} / ${row.judged}`) : (() => '—');
+        [[name, ''], [row.cases, 'num'], [record.config.mode === 'retrieval-only' ? '—' : `${row.passed} / ${row.cases}`, 'num'],
+         [judged(row.judge_correct), 'num'], [judged(row.judge_grounded), 'num'], [dec(row.recall), 'num']]
+          .forEach(([v, cls]) => tr.appendChild(el('td', cls, String(v))));
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      wrap.appendChild(table);
+      return wrap;
+    }
+
+    function renderDetail(c) {
+      const detail = el('div', 'detail');
+      const left = el('div');
+      const q = el('section');
+      q.append(el('h3', '', 'Question'), el('p', 'question', c.question));
+      left.appendChild(q);
+      if (c.answer !== null) {
+        const a = el('section');
+        const answer = el('div', 'answer md');
+        answer.innerHTML = DOMPurify.sanitize(marked.parse(c.answer));
+        a.append(el('h3', '', 'Answer'), answer);
+        left.appendChild(a);
+      }
+      const probs = problems(c);
+      const p = el('section');
+      p.appendChild(el('h3', '', 'What went wrong'));
+      if (probs.length) {
+        const ul = el('ul', 'problems');
+        probs.forEach(t => ul.appendChild(el('li', '', t)));
+        p.appendChild(ul);
+      } else {
+        p.appendChild(el('p', 'muted', 'Nothing: every check passed.'));
+      }
+      left.appendChild(p);
+
+      const right = el('div');
+      const exp = el('section');
+      exp.appendChild(el('h3', '', 'Needed documents'));
+      exp.appendChild(el('p', 'muted', c.expected_sources.length ? c.expected_sources.join(', ') : 'None — the right answer is a refusal.'));
+      right.appendChild(exp);
+
+      const r = el('section');
+      r.appendChild(el('h3', '', `Retrieved, closest first`));
+      const list = el('ol', 'retrieved');
+      c.retrieved.forEach((x, i) => {
+        const li = el('li');
+        li.append(el('span', 'dist', `#${i + 1}`), el('span', 'mono', `${x.source} · chunk ${x.chunk_index}`), el('span', 'dist', x.distance.toFixed(3)));
+        if (c.expected_sources.includes(x.source)) li.appendChild(chip('good', 'Needed'));
+        list.appendChild(li);
+      });
+      if (!c.retrieved.length) list.appendChild(el('li', 'muted', 'Nothing retrieved.'));
+      r.appendChild(list);
+      right.appendChild(r);
+
+      if (c.generate_ms !== null) {
+        const t = el('section');
+        t.append(el('h3', '', 'Cost of this case'),
+          el('p', 'muted', `Retrieve ${secs(c.retrieve_ms)} · generate ${secs(c.generate_ms)} · ${c.input_tokens.toLocaleString()} → ${c.output_tokens.toLocaleString()} tokens`));
+        right.appendChild(t);
+      }
+      detail.append(left, right);
+      return detail;
+    }
+
+    function renderCases(record) {
+      const baseCases = state.baseline ? Object.fromEntries(state.baseline.cases.map(c => [c.id, c])) : {};
+      const cases = record.cases.filter(c => !state.failuresOnly || caseFailed(c));
+
+      const wrap = el('div', 'table-wrap');
+      const table = el('table');
+      table.innerHTML = `<thead><tr><th scope="col">Case</th><th scope="col" class="hide-sm">Category</th>
+        <th scope="col">Answer</th><th scope="col">Retrieval</th><th scope="col">Judge</th>
+        <th scope="col" class="num hide-sm">Time</th></tr></thead>`;
+      const tbody = el('tbody');
+
+      if (!cases.length) {
+        const tr = el('tr');
+        const td = el('td', 'muted', 'No cases with problems in this run.');
+        td.colSpan = 6;
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+      }
+
+      cases.forEach(c => {
+        const tr = el('tr', 'case-row');
+        const idCell = el('td');
+        const btn = el('button', 'expand', c.id);
+        btn.type = 'button';
+        btn.setAttribute('aria-expanded', String(state.open.has(c.id)));
+        idCell.appendChild(btn);
+
+        const prev = baseCases[c.id];
+        if (prev && prev.passed !== null && c.passed !== null && prev.passed !== c.passed) {
+          idCell.appendChild(el('div', `flip ${c.passed ? 'better' : 'worse'}`, c.passed ? 'Fixed since compared run' : 'Broke since compared run'));
+        }
+
+        const answerCell = el('td');
+        answerCell.appendChild(c.error ? chip('warn', 'Error') : verdictChip(c.passed));
+        if (c.refused) answerCell.appendChild(el('div', 'tile-sub', 'refused'));
+
+        const retrCell = el('td');
+        if (c.retrieval) {
+          const ok = c.retrieval.recall === 1;
+          retrCell.appendChild(chip(ok ? 'good' : 'bad', `recall ${dec(c.retrieval.recall)}`));
+          retrCell.appendChild(el('div', 'tile-sub', `rank of first needed: ${c.retrieval.reciprocal_rank ? Math.round(1 / c.retrieval.reciprocal_rank) : 'none'}`));
+        } else {
+          retrCell.appendChild(el('span', 'muted', 'no docs needed'));
+        }
+
+        const judgeCell = el('td');
+        if (c.judge) {
+          const chips = el('div', 'chips');
+          chips.append(verdictChip(c.judge.correct, ['Correct', 'Incorrect']), verdictChip(c.judge.grounded, ['Grounded', 'Ungrounded']));
+          judgeCell.appendChild(chips);
+        } else {
+          judgeCell.appendChild(el('span', 'muted', '—'));
+        }
+
+        const time = c.generate_ms !== null ? c.retrieve_ms + c.generate_ms : c.retrieve_ms;
+        tr.append(idCell, el('td', 'hide-sm', c.category), answerCell, retrCell, judgeCell, el('td', 'num hide-sm', secs(time)));
+        tbody.appendChild(tr);
+
+        const detailRow = el('tr', 'detail-row');
+        detailRow.hidden = !state.open.has(c.id);
+        const td = el('td');
+        td.colSpan = 6;
+        if (state.open.has(c.id)) td.appendChild(renderDetail(c));
+        detailRow.appendChild(td);
+        tbody.appendChild(detailRow);
+
+        tr.addEventListener('click', () => {
+          const opening = !state.open.has(c.id);
+          opening ? state.open.add(c.id) : state.open.delete(c.id);
+          btn.setAttribute('aria-expanded', String(opening));
+          detailRow.hidden = !opening;
+          if (opening && !td.firstChild) td.appendChild(renderDetail(c));
+        });
+      });
+      table.appendChild(tbody);
+      wrap.appendChild(table);
+      return wrap;
+    }
+
+    function render() {
+      const record = state.current;
+      app.innerHTML = '';
+      app.append(renderControls(), renderMeta(record));
+      app.appendChild(el('h2', '', 'Headline'));
+      app.append(...renderTiles(record));
+      app.appendChild(el('h2', '', 'By category'));
+      app.appendChild(renderCategories(record));
+      app.appendChild(el('h2', '', 'Cases'));
+      app.appendChild(renderCases(record));
+    }
+
+    async function selectRun(runId, baselineId) {
+      try {
+        state.current = await getJSON(`/api/evals/runs/${encodeURIComponent(runId)}`);
+        state.baseline = baselineId ? await getJSON(`/api/evals/runs/${encodeURIComponent(baselineId)}`) : null;
+        state.open.clear();
+        render();
+      } catch (err) {
+        app.innerHTML = '';
+        const box = el('div', 'empty');
+        box.setAttribute('role', 'alert');
+        box.textContent = `Couldn't load the run: ${err.message}`;
+        app.appendChild(box);
+      }
+    }
+
+    (async () => {
+      try {
+        state.runs = await getJSON('/api/evals/runs');
+      } catch (err) {
+        app.innerHTML = '';
+        const box = el('div', 'empty');
+        box.setAttribute('role', 'alert');
+        box.textContent = `Couldn't load eval runs: ${err.message}`;
+        app.appendChild(box);
+        return;
+      }
+      if (!state.runs.length) { renderEmpty(); return; }
+      // Default: newest run, compared with the next older one.
+      selectRun(state.runs[0].run_id, state.runs[1]?.run_id || null);
+    })();
+  </script>
+</body>
+</html>

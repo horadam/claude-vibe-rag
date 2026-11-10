@@ -3,668 +3,715 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Northwind Robotics — HR Assistant</title>
+  <title>HR Assistant · Northwind Robotics</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/app.css" />
   <script src="/static/marked.min.js"></script>
   <script src="/static/purify.min.js"></script>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    .layout { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
 
-    :root {
-      --navy:       #0f2542;
-      --navy-light: #1a3a5c;
-      --blue:       #2563eb;
-      --blue-dark:  #1d4ed8;
-      --slate-50:   #f8fafc;
-      --slate-100:  #f1f5f9;
-      --slate-200:  #e2e8f0;
-      --slate-400:  #94a3b8;
-      --slate-500:  #64748b;
-      --slate-700:  #334155;
-      --slate-900:  #0f172a;
-      --white:      #ffffff;
-      --radius:     14px;
-      --shadow:     0 1px 4px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
-    }
-
-    html, body {
-      height: 100%;
-      font-family: 'Inter', system-ui, sans-serif;
-      background: var(--slate-100);
-      color: var(--slate-900);
-      -webkit-font-smoothing: antialiased;
-    }
-
-    /* ── Layout ── */
-    .layout {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-
-    /* ── Header ── */
-    header {
-      background: var(--navy);
-      padding: 0 24px;
-      height: 62px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,.25);
-      z-index: 10;
-    }
-
-    .logo {
-      width: 34px;
-      height: 34px;
-      background: var(--blue);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .logo svg { width: 20px; height: 20px; fill: white; }
-
-    .header-text { display: flex; flex-direction: column; }
-    .header-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: white;
-      letter-spacing: -.01em;
-    }
-    .header-subtitle {
-      font-size: 11px;
-      color: rgba(255,255,255,.5);
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-    }
-
-    .header-badge {
-      margin-left: auto;
-      font-size: 11px;
-      font-weight: 600;
-      color: rgba(255,255,255,.6);
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.12);
-      padding: 3px 10px;
-      border-radius: 20px;
-      letter-spacing: .03em;
-    }
-
-    /* ── Message thread ── */
-    .thread {
-      flex: 1;
-      overflow-y: auto;
-      padding: 28px 0;
-      scroll-behavior: smooth;
-    }
-
+    /* ── Thread ── */
+    .thread { flex: 1; overflow-y: auto; padding: 28px 0; }
     .thread-inner {
-      max-width: 740px;
-      margin: 0 auto;
-      padding: 0 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
+      max-width: 760px; margin: 0 auto; padding: 0 20px;
+      display: flex; flex-direction: column; gap: 26px;
     }
+
+    .notice {
+      background: var(--warn-soft); color: var(--text); border: 1px solid var(--border);
+      border-left: 3px solid var(--warn); border-radius: 10px; padding: 12px 14px;
+      font-size: 14px; line-height: 1.55;
+    }
+    .notice code { font-family: var(--mono); font-size: .9em; }
 
     /* ── Empty state ── */
     .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      padding: 64px 24px;
-      text-align: center;
-      color: var(--slate-400);
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      padding: 48px 8px; text-align: center; color: var(--muted);
     }
-
     .empty-icon {
-      width: 52px;
-      height: 52px;
-      background: var(--slate-200);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 52px; height: 52px; background: var(--surface-3); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
     }
-    .empty-icon svg { width: 26px; height: 26px; stroke: var(--slate-400); fill: none; }
-
-    .empty-state h2 { font-size: 17px; font-weight: 600; color: var(--slate-700); }
-    .empty-state p  { font-size: 14px; max-width: 340px; line-height: 1.6; }
-
-    .suggestions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: center;
-      margin-top: 4px;
-    }
-
+    .empty-icon svg { width: 26px; height: 26px; stroke: var(--muted); fill: none; }
+    .empty-state h1 { font-size: 18px; font-weight: 600; color: var(--text); }
+    .empty-state p { font-size: 14px; max-width: 420px; line-height: 1.6; }
+    .suggestions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 4px; }
     .suggestion {
-      font-size: 13px;
-      background: var(--white);
-      border: 1px solid var(--slate-200);
-      border-radius: 20px;
-      padding: 6px 14px;
-      cursor: pointer;
-      color: var(--slate-700);
-      transition: border-color .15s, box-shadow .15s;
+      font: inherit; font-size: 13px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 7px 14px; cursor: pointer; color: var(--text-2);
+      transition: border-color .15s, color .15s;
     }
-    .suggestion:hover {
-      border-color: var(--blue);
-      color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(37,99,235,.08);
-    }
+    .suggestion:hover { border-color: var(--accent); color: var(--accent); }
+    .suggestion-kind { color: var(--faint); font-size: 11px; margin-left: 6px; }
 
     /* ── Messages ── */
-    .message { display: flex; flex-direction: column; gap: 6px; }
-
-    .message.user  { align-items: flex-end; }
-    .message.assistant { align-items: flex-start; }
+    .message { display: flex; flex-direction: column; gap: 7px; animation: fadeUp .2s ease-out; }
+    .message.user { align-items: flex-end; }
+    .message.assistant { align-items: stretch; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
     .message-meta {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      color: var(--slate-400);
-      padding: 0 4px;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+      color: var(--faint); padding: 0 4px;
     }
+    .message-meta .chip { text-transform: none; letter-spacing: 0; }
 
     .bubble {
-      max-width: 88%;
-      padding: 13px 17px;
-      border-radius: var(--radius);
-      font-size: 15px;
-      line-height: 1.65;
-      word-break: break-word;
+      padding: 13px 17px; border-radius: var(--radius);
+      font-size: 15px; line-height: 1.65; overflow-wrap: anywhere;
     }
-
     .message.user .bubble {
-      background: var(--blue);
-      color: white;
+      max-width: 85%; background: var(--accent); color: var(--on-accent);
       border-bottom-right-radius: 4px;
     }
-
     .message.assistant .bubble {
-      background: var(--white);
-      color: var(--slate-900);
-      border-bottom-left-radius: 4px;
-      box-shadow: var(--shadow);
+      background: var(--surface); color: var(--text);
+      border-bottom-left-radius: 4px; box-shadow: var(--shadow);
     }
+    .bubble a.cite {
+      text-decoration: none; font-weight: 500; border-bottom: 1px dashed currentColor;
+    }
+    .bubble a.cite:hover { border-bottom-style: solid; }
 
-    /* ── Citations ── */
-    .citations {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      padding: 0 4px;
+    .bubble.error {
+      border: 1px solid var(--bad); background: var(--bad-soft); box-shadow: none;
     }
+    .error-title { font-weight: 600; color: var(--bad); margin-bottom: 4px; }
+    .error-detail { font-size: 14px; color: var(--text-2); }
+    .retry {
+      margin-top: 10px; font: inherit; font-size: 13px; font-weight: 600;
+      background: var(--surface); color: var(--text); border: 1px solid var(--border-strong);
+      padding: 6px 12px; border-radius: 8px; cursor: pointer;
+    }
+    .retry:hover { border-color: var(--accent); color: var(--accent); }
 
-    .citation-label {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      color: var(--slate-400);
-      width: 100%;
+    /* ── Sources ── */
+    .sources { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 4px; align-items: center; }
+    .sources-label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+      color: var(--faint); margin-right: 2px;
     }
+    .source-pill {
+      font-size: 12.5px; font-weight: 500; background: var(--surface); border: 1px solid var(--border);
+      color: var(--text-2); padding: 4px 11px; border-radius: 20px; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .source-pill:hover { border-color: var(--accent); color: var(--accent); }
+    .source-pill svg { width: 12px; height: 12px; stroke: currentColor; fill: none; flex-shrink: 0; }
 
-    .citation-pill {
-      font-size: 12px;
-      font-weight: 500;
-      background: var(--slate-100);
-      border: 1px solid var(--slate-200);
-      color: var(--slate-500);
-      padding: 3px 10px;
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      text-decoration: none;
-      transition: border-color .15s, color .15s, box-shadow .15s;
+    /* ── Inspector ── */
+    .inspector {
+      background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px;
+      font-size: 13.5px; color: var(--text-2);
     }
-    .citation-pill:hover {
-      border-color: var(--blue);
-      color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(37,99,235,.08);
+    .inspector > summary {
+      list-style: none; cursor: pointer; padding: 10px 14px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
     }
-    .citation-pill svg {
-      width: 11px;
-      height: 11px;
-      stroke: var(--slate-400);
-      fill: none;
-      flex-shrink: 0;
+    .inspector > summary::-webkit-details-marker { display: none; }
+    .inspector > summary::before {
+      content: ''; width: 7px; height: 7px; border-right: 2px solid var(--muted);
+      border-bottom: 2px solid var(--muted); transform: rotate(-45deg);
+      transition: transform .15s; flex-shrink: 0;
     }
+    .inspector[open] > summary::before { transform: rotate(45deg); }
+    .inspector-title { font-weight: 600; color: var(--text); }
+    .inspector-meta { color: var(--muted); }
+    .inspector-body { padding: 4px 14px 14px; display: flex; flex-direction: column; gap: 12px; }
 
-    /* ── Thinking indicator ── */
-    .thinking-bubble {
-      background: var(--white);
-      box-shadow: var(--shadow);
-      padding: 14px 18px;
-      border-radius: var(--radius);
-      border-bottom-left-radius: 4px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      min-width: 160px;
-      position: relative;
-      overflow: hidden;
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
+    .stat {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px;
     }
+    .stat-label { font-size: 11.5px; color: var(--muted); }
+    .stat-value { font-size: 14.5px; font-weight: 600; color: var(--text); margin-top: 2px; font-variant-numeric: tabular-nums; }
 
-    /* animated top border sweep */
-    .thinking-bubble::before {
-      content: '';
-      position: absolute;
-      top: 0; left: -100%;
-      width: 100%; height: 2px;
-      background: linear-gradient(90deg, transparent, var(--blue), transparent);
-      animation: sweep 1.6s ease-in-out infinite;
+    .passages { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .passage {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
     }
-    @keyframes sweep {
-      0%   { left: -100%; }
-      100% { left: 100%; }
+    .passage.cited { border-left: 3px solid var(--accent); }
+    .passage-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .rank {
+      font-size: 11.5px; font-weight: 700; color: var(--muted); background: var(--surface-3);
+      border-radius: 6px; padding: 2px 6px; font-variant-numeric: tabular-nums;
     }
+    .passage-title { font-weight: 600; color: var(--text); }
+    .passage-sub { color: var(--muted); font-size: 12.5px; }
+    .passage-head .chip { margin-left: auto; }
+    .passage-links { display: flex; gap: 14px; margin-top: 6px; font-size: 12.5px; flex-wrap: wrap; }
+    .passage-links a { text-decoration: none; }
+    .passage-links a:hover { text-decoration: underline; }
+    .passage details summary { cursor: pointer; color: var(--accent); }
+    .passage-text {
+      margin-top: 8px; white-space: pre-wrap; font-size: 12.5px; line-height: 1.55;
+      color: var(--text-2); background: var(--surface-2); border-radius: 8px; padding: 8px 10px;
+      max-height: 260px; overflow-y: auto;
+    }
+    .inspector-note { font-size: 12px; color: var(--muted); line-height: 1.5; }
 
-    .thinking-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--slate-400);
-      letter-spacing: .03em;
-      animation: pulse-text 2s ease-in-out infinite;
+    /* ── Thinking ── */
+    .thinking {
+      align-self: flex-start; background: var(--surface); box-shadow: var(--shadow);
+      padding: 12px 16px; border-radius: var(--radius); border-bottom-left-radius: 4px;
+      display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--muted);
     }
-    @keyframes pulse-text {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: .5; }
-    }
+    .dots { display: flex; gap: 5px; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: bounce 1.2s ease-in-out infinite; }
+    .dot:nth-child(2) { animation-delay: .18s; opacity: .7; }
+    .dot:nth-child(3) { animation-delay: .36s; opacity: .45; }
+    @keyframes bounce { 0%, 60%, 100% { transform: none; } 30% { transform: translateY(-5px); } }
+    .timer { font-variant-numeric: tabular-nums; color: var(--faint); }
 
-    .thinking-dots {
-      display: flex;
-      gap: 5px;
-      align-items: center;
-    }
-    .dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      animation: bounce 1.2s ease-in-out infinite;
-    }
-    .dot:nth-child(1) { background: var(--blue);       animation-delay: 0s; }
-    .dot:nth-child(2) { background: var(--slate-300);  animation-delay: .18s; }
-    .dot:nth-child(3) { background: var(--slate-200);  animation-delay: .36s; }
-
-    @keyframes bounce {
-      0%, 60%, 100% { transform: translateY(0) scale(1); }
-      30%            { transform: translateY(-6px) scale(1.15); }
-    }
-
-    .thinking-timer {
-      font-size: 11px;
-      color: var(--slate-400);
-      opacity: 0;
-      transition: opacity .4s;
-    }
-    .thinking-timer.visible { opacity: 1; }
-
-    /* ── Input bar ── */
-    .input-bar {
-      background: var(--white);
-      border-top: 1px solid var(--slate-200);
-      padding: 14px 20px;
-      flex-shrink: 0;
-    }
-
-    .input-inner {
-      max-width: 740px;
-      margin: 0 auto;
-      display: flex;
-      gap: 10px;
-      align-items: flex-end;
-    }
-
+    /* ── Input ── */
+    .input-bar { background: var(--surface); border-top: 1px solid var(--border); padding: 14px 20px; flex-shrink: 0; }
+    .input-inner { max-width: 760px; margin: 0 auto; display: flex; gap: 10px; align-items: flex-end; }
     .input-wrap {
-      flex: 1;
-      background: var(--slate-50);
-      border: 1.5px solid var(--slate-200);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      padding: 0 14px;
-      transition: border-color .15s, box-shadow .15s;
+      flex: 1; background: var(--surface-2); border: 1.5px solid var(--border-strong); border-radius: 12px;
+      display: flex; align-items: center; padding: 0 14px; transition: border-color .15s, box-shadow .15s;
     }
-    .input-wrap:focus-within {
-      border-color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(37,99,235,.1);
-    }
-
+    .input-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
     #question {
-      flex: 1;
-      border: none;
-      background: transparent;
-      font-family: inherit;
-      font-size: 15px;
-      color: var(--slate-900);
-      padding: 13px 0;
-      outline: none;
-      resize: none;
-      line-height: 1.5;
-      max-height: 120px;
+      flex: 1; border: none; background: transparent; font: inherit; font-size: 15px;
+      color: var(--text); padding: 12px 0; outline: none; resize: none; line-height: 1.5; max-height: 120px;
     }
-    #question::placeholder { color: var(--slate-400); }
-
+    #question::placeholder { color: var(--faint); }
     #send {
-      width: 44px;
-      height: 44px;
-      background: var(--blue);
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      transition: background .15s, transform .1s;
+      width: 44px; height: 44px; background: var(--accent); border: none; border-radius: 10px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
-    #send:hover:not(:disabled) { background: var(--blue-dark); }
-    #send:active:not(:disabled) { transform: scale(.95); }
-    #send:disabled { background: var(--slate-200); cursor: not-allowed; }
-    #send svg { width: 18px; height: 18px; fill: white; }
-    #send:disabled svg { fill: var(--slate-400); }
+    #send:hover:not(:disabled) { background: var(--accent-strong); }
+    #send:disabled { background: var(--surface-3); cursor: not-allowed; }
+    #send svg { width: 18px; height: 18px; fill: var(--on-accent); }
+    #send:disabled svg { fill: var(--faint); }
+    .input-hint { text-align: center; font-size: 11px; color: var(--faint); margin-top: 8px; }
 
-    .input-hint {
-      text-align: center;
-      font-size: 11px;
-      color: var(--slate-400);
-      margin-top: 8px;
+    /* ── Model settings ── */
+    .model-btn {
+      display: inline-flex; align-items: center; gap: 6px; margin-left: 6px;
+      font: inherit; font-size: 12px; font-weight: 600; color: white; cursor: pointer;
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.2);
+      padding: 5px 10px; border-radius: 8px; white-space: nowrap;
     }
+    .model-btn:hover, .model-btn[aria-expanded="true"] { background: rgba(255,255,255,.16); }
+    .model-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+    .model-btn .model-name { font-weight: 500; color: rgba(255,255,255,.7); }
+    .model-btn .key-dot { width: 7px; height: 7px; border-radius: 50%; background: #ffd27a; }
 
-    /* ── Markdown content inside assistant bubbles ── */
-    .bubble.md h1, .bubble.md h2, .bubble.md h3 {
-      font-weight: 700;
-      line-height: 1.3;
-      margin-top: 1em;
-      margin-bottom: .35em;
-      color: var(--slate-900);
+    .settings {
+      position: absolute; top: 64px; right: 16px; z-index: 20; width: 360px; max-width: calc(100vw - 32px);
+      background: var(--surface); color: var(--text); border: 1px solid var(--border);
+      border-radius: 12px; box-shadow: var(--shadow); padding: 18px;
+      display: flex; flex-direction: column; gap: 16px;
     }
-    .bubble.md h1 { font-size: 1.15em; }
-    .bubble.md h2 { font-size: 1.05em; }
-    .bubble.md h3 { font-size: .95em; text-transform: uppercase; letter-spacing: .04em; }
-    .bubble.md h1:first-child,
-    .bubble.md h2:first-child,
-    .bubble.md h3:first-child { margin-top: 0; }
+    .settings[hidden] { display: none; }
+    .settings h2 { font-size: 15px; font-weight: 700; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field[hidden] { display: none; }
+    .field-label, .field label { font-size: 12.5px; font-weight: 600; color: var(--text-2); }
+    .field input {
+      font: inherit; font-size: 13.5px; font-family: var(--mono); color: var(--text);
+      background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: 8px;
+      padding: 8px 10px; width: 100%;
+    }
+    .field input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+    .field-hint { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+    .field-hint.required { color: var(--warn); }
+    .settings-error {
+      font-size: 13px; line-height: 1.45; color: var(--text); background: var(--bad-soft);
+      border-left: 3px solid var(--bad); border-radius: 8px; padding: 8px 10px;
+    }
+    .settings-error[hidden] { display: none; }
+    .settings-note { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .settings-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .settings-actions button {
+      font: inherit; font-size: 13px; font-weight: 600; border-radius: 8px; padding: 7px 14px; cursor: pointer;
+      background: none; color: var(--text-2); border: 1px solid var(--border-strong);
+    }
+    .settings-actions button.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 
-    .bubble.md p { margin-bottom: .7em; }
-    .bubble.md p:last-child { margin-bottom: 0; }
-
-    .bubble.md strong { font-weight: 650; }
-    .bubble.md em     { font-style: italic; }
-
-    .bubble.md ul, .bubble.md ol {
-      padding-left: 1.4em;
-      margin-bottom: .7em;
+    @media (max-width: 560px) {
+      .model-btn .model-name { display: none; }
+      /* The model button needs the room; the logo still links home. */
+      .brand-text { display: none; }
+      .settings { right: 16px; left: 16px; width: auto; max-width: none; }
+      .thread { padding: 18px 0; }
+      .thread-inner { padding: 0 16px; }
+      .input-bar { padding: 10px 16px; }
+      .input-hint { display: none; }
+      .message.user .bubble { max-width: 92%; }
     }
-    .bubble.md li { margin-bottom: .25em; }
-    .bubble.md li:last-child { margin-bottom: 0; }
-
-    .bubble.md code {
-      font-family: ui-monospace, 'SF Mono', monospace;
-      font-size: .85em;
-      background: var(--slate-100);
-      border: 1px solid var(--slate-200);
-      padding: 1px 5px;
-      border-radius: 4px;
-    }
-
-    .bubble.md pre {
-      background: var(--slate-100);
-      border: 1px solid var(--slate-200);
-      border-radius: 8px;
-      padding: 12px 14px;
-      overflow-x: auto;
-      margin-bottom: .7em;
-    }
-    .bubble.md pre code {
-      background: none;
-      border: none;
-      padding: 0;
-      font-size: .85em;
-    }
-
-    .bubble.md blockquote {
-      border-left: 3px solid var(--slate-200);
-      padding-left: 12px;
-      color: var(--slate-500);
-      margin-bottom: .7em;
-    }
-
-    .bubble.md table {
-      border-collapse: collapse;
-      width: 100%;
-      font-size: .9em;
-      margin-bottom: .7em;
-    }
-    .bubble.md th, .bubble.md td {
-      border: 1px solid var(--slate-200);
-      padding: 6px 10px;
-      text-align: left;
-    }
-    .bubble.md th {
-      background: var(--slate-50);
-      font-weight: 600;
-    }
-    .bubble.md tr:nth-child(even) td { background: var(--slate-50); }
-
-    .bubble.md hr {
-      border: none;
-      border-top: 1px solid var(--slate-200);
-      margin: .8em 0;
-    }
-
-    /* ── Fade-in animation ── */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .message { animation: fadeUp .2s ease-out; }
   </style>
 </head>
 <body>
 <div class="layout">
 
-  <header>
-    <div class="logo">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-      </svg>
-    </div>
-    <div class="header-text">
-      <span class="header-title">Northwind Robotics</span>
-      <span class="header-subtitle">HR Assistant</span>
-    </div>
-    <span class="header-badge">Internal Use Only</span>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </span>
+      <span class="brand-text">
+        <span class="brand-title">Northwind Robotics</span>
+        <span class="brand-sub">HR Assistant</span>
+      </span>
+    </a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/" aria-current="page">Assistant</a>
+      <a href="/evals">Evals</a>
+      <span class="index-badge" id="index-badge">Checking index…</span>
+      <button class="model-btn" id="model-btn" type="button" aria-expanded="false" aria-controls="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg>
+        <span id="model-provider">Model</span><span class="model-name" id="model-name"></span>
+      </button>
+    </nav>
+    <section class="settings" id="settings" role="dialog" aria-labelledby="settings-title" hidden>
+      <h2 id="settings-title">Model settings</h2>
+      <div class="field">
+        <span class="field-label" id="provider-label">Answers from</span>
+        <div class="segmented" role="group" aria-labelledby="provider-label" id="provider-seg"></div>
+        <p class="field-hint" id="provider-hint"></p>
+      </div>
+      <div class="field">
+        <label for="openai-key">OpenAI API key</label>
+        <input id="openai-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-…" />
+        <p class="field-hint" id="openai-hint"></p>
+      </div>
+      <div class="field" id="anthropic-field">
+        <label for="anthropic-key">Anthropic API key</label>
+        <input id="anthropic-key" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-…" />
+        <p class="field-hint" id="anthropic-hint"></p>
+      </div>
+      <div class="settings-error" id="settings-error" role="alert" hidden></div>
+      <p class="settings-note">Keys stay in this browser tab and are sent to this server with each question. The server uses them for that request only; it never saves or logs them.</p>
+      <div class="settings-actions">
+        <button type="button" id="forget-keys">Forget keys</button>
+        <button type="button" class="primary" id="settings-done">Done</button>
+      </div>
+    </section>
   </header>
 
-  <div class="thread" id="thread">
-    <div class="thread-inner" id="thread-inner">
-
+  <main class="thread" id="thread">
+    <div class="thread-inner" id="thread-inner" aria-live="polite">
       <div class="empty-state" id="empty-state">
-        <div class="empty-icon">
-          <svg viewBox="0 0 24 24" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/>
-          </svg>
+        <div class="empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
         </div>
-        <h2>Ask about HR policies</h2>
-        <p>Questions are answered using the Northwind Robotics employee handbook. I'll cite my sources.</p>
+        <h1>Ask about Northwind's HR policies</h1>
+        <p>Answers come only from the employee handbook. Each one links to the passages it used, and you can open the answer to see what was retrieved and how long it took.</p>
         <div class="suggestions">
-          <button class="suggestion">How much PTO do I accrue?</button>
-          <button class="suggestion">What's the parental leave policy?</button>
-          <button class="suggestion">Can I work remotely full-time?</button>
-          <button class="suggestion">How do performance reviews work?</button>
+          <button class="suggestion" data-q="How much PTO do I accrue each month?">How much PTO do I accrue?<span class="suggestion-kind">one policy</span></button>
+          <button class="suggestion" data-q="If I resign with 15 days of unused PTO, how much is paid out and when?">Unused PTO when I resign<span class="suggestion-kind">two policies</span></button>
+          <button class="suggestion" data-q="How much advance notice is required when an employee wants to take leave?">Notice needed for leave<span class="suggestion-kind">ambiguous</span></button>
+          <button class="suggestion" data-q="What is the company's 401(k) matching contribution?">What's the 401(k) match?<span class="suggestion-kind">not in handbook</span></button>
         </div>
       </div>
-
     </div>
-  </div>
+  </main>
 
   <div class="input-bar">
-    <div class="input-inner">
+    <form class="input-inner" id="ask-form">
+      <label class="visually-hidden" for="question">Your question</label>
       <div class="input-wrap">
         <textarea id="question" rows="1" placeholder="Ask a question about HR policies…"></textarea>
       </div>
-      <button id="send" title="Send">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z"/>
-        </svg>
+      <button id="send" type="submit" aria-label="Send question">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z"/></svg>
       </button>
-    </div>
-    <p class="input-hint">Press Enter to send · Shift+Enter for new line</p>
+    </form>
+    <p class="input-hint">Enter to send · Shift+Enter for a new line</p>
   </div>
 
 </div>
 
 <script>
+  const thread = document.getElementById('thread');
   const threadInner = document.getElementById('thread-inner');
-  const thread      = document.getElementById('thread');
-  const textarea    = document.getElementById('question');
-  const sendBtn     = document.getElementById('send');
-  const emptyState  = document.getElementById('empty-state');
+  const textarea = document.getElementById('question');
+  const sendBtn = document.getElementById('send');
+  const emptyState = document.getElementById('empty-state');
+  const indexBadge = document.getElementById('index-badge');
 
-  function scrollToBottom() {
-    thread.scrollTo({ top: thread.scrollHeight, behavior: 'smooth' });
+  const DOC_ICON = '<svg viewBox="0 0 24 24" stroke-width="1.6" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>';
+  const CHECK = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const INFO = '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 7v4M8 4.8v.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+
+  let indexSize = null;
+
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
   }
 
-  function autoResize() {
-    textarea.style.height = 'auto';
-    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
-  }
+  function seconds(ms) { return `${(ms / 1000).toFixed(2)} s`; }
+  function fmt(n) { return n.toLocaleString('en-US'); }
+  function docUrl(source, chunkIndex) { return `/docs/${encodeURIComponent(source)}?chunk=${chunkIndex}`; }
 
-  function setLoading(on) {
-    sendBtn.disabled = on;
-    textarea.disabled = on;
-  }
+  function scrollToBottom() { thread.scrollTo({ top: thread.scrollHeight, behavior: 'smooth' }); }
 
-  function appendMessage(role, text, citations = []) {
-    if (emptyState) emptyState.style.display = 'none';
+  function hideEmptyState() { if (emptyState) emptyState.style.display = 'none'; }
 
-    const msg = document.createElement('div');
-    msg.className = `message ${role}`;
-
-    const meta = document.createElement('div');
-    meta.className = 'message-meta';
-    meta.textContent = role === 'user' ? 'You' : 'HR Assistant';
-
-    const bubble = document.createElement('div');
-    bubble.className = role === 'assistant' ? 'bubble md' : 'bubble';
-    if (role === 'assistant') {
-      bubble.innerHTML = DOMPurify.sanitize(marked.parse(text));
-    } else {
-      bubble.textContent = text;
+  // ── Index status ─────────────────────────────────────────────────────────
+  async function checkIndex() {
+    try {
+      const res = await fetch('/health');
+      const data = await res.json();
+      indexSize = data.doc_count;
+      if (indexSize > 0) {
+        indexBadge.textContent = `${indexSize} chunks indexed`;
+      } else {
+        indexBadge.textContent = 'Index empty';
+        indexBadge.classList.add('empty');
+        const notice = el('div', 'notice');
+        notice.innerHTML = 'The handbook hasn\'t been indexed yet, so questions will fail. Run <code>uv run python ingest_cli.py</code> and reload this page.';
+        threadInner.prepend(notice);
+      }
+    } catch (err) {
+      indexBadge.textContent = 'Server unreachable';
+      indexBadge.classList.add('empty');
     }
+  }
 
-    msg.appendChild(meta);
-    msg.appendChild(bubble);
+  // ── Rendering ────────────────────────────────────────────────────────────
 
-    if (role === 'assistant' && citations.length > 0) {
-      const citWrap = document.createElement('div');
-      citWrap.className = 'citations';
+  // The model cites filenames like (pto_policy.md). Turn each one into a link
+  // to the exact passage it was given from that document.
+  function linkCitations(markdown, firstChunkBySource) {
+    return markdown.replace(/\b([\w-]+\.md)\b/g, (match, source) => {
+      const chunk = firstChunkBySource.get(source);
+      return chunk ? `[${chunk.title}](${docUrl(source, chunk.chunk_index)})` : match;
+    });
+  }
 
-      const label = document.createElement('span');
-      label.className = 'citation-label';
-      label.textContent = 'Sources';
-      citWrap.appendChild(label);
-
-      citations.forEach(c => {
-        const pill = document.createElement('a');
-        pill.className = 'citation-pill';
-        pill.href = `/docs/${c.source}`;
-        pill.target = '_blank';
-        pill.rel = 'noopener noreferrer';
-        pill.innerHTML = `
-          <svg viewBox="0 0 24 24" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
-          </svg>
-          ${c.source}`;
-        citWrap.appendChild(pill);
-      });
-
-      msg.appendChild(citWrap);
-    }
-
+  function appendUser(text) {
+    hideEmptyState();
+    const msg = el('div', 'message user');
+    msg.append(el('div', 'message-meta', 'You'), el('div', 'bubble', text));
     threadInner.appendChild(msg);
     scrollToBottom();
-    return msg;
   }
 
-  function appendTyping() {
-    const msg = document.createElement('div');
-    msg.className = 'message assistant';
-    msg.id = 'typing';
-
-    const meta = document.createElement('div');
-    meta.className = 'message-meta';
-    meta.textContent = 'HR Assistant';
-
-    const bubble = document.createElement('div');
-    bubble.className = 'thinking-bubble';
-    bubble.innerHTML = `
-      <span class="thinking-label">Thinking…</span>
-      <div class="thinking-dots">
-        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-      </div>
-      <span class="thinking-timer" id="thinking-timer"></span>`;
-
-    msg.appendChild(meta);
-    msg.appendChild(bubble);
-    threadInner.appendChild(msg);
+  function appendThinking() {
+    const wrap = el('div', 'message assistant');
+    const box = el('div', 'thinking');
+    box.setAttribute('role', 'status');
+    box.innerHTML = '<div class="dots" aria-hidden="true"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><span>Searching the handbook and writing an answer…</span>';
+    const timer = el('span', 'timer');
+    box.appendChild(timer);
+    wrap.appendChild(box);
+    threadInner.appendChild(wrap);
     scrollToBottom();
-
-    // elapsed-time counter — appears after 3 s
-    const timerEl = bubble.querySelector('#thinking-timer');
     const start = Date.now();
-    const interval = setInterval(() => {
-      const s = ((Date.now() - start) / 1000).toFixed(0);
-      timerEl.textContent = `${s}s elapsed`;
-      timerEl.classList.add('visible');
-    }, 1000);
-    msg._stopTimer = () => clearInterval(interval);
-
-    return msg;
+    const interval = setInterval(() => { timer.textContent = `${Math.round((Date.now() - start) / 1000)} s`; }, 1000);
+    wrap.stop = () => { clearInterval(interval); wrap.remove(); };
+    return wrap;
   }
 
-  async function ask(question) {
-    appendMessage('user', question);
-    const typingEl = appendTyping();
-    setLoading(true);
+  function buildSources(data, firstChunkBySource) {
+    const cited = [...new Set(data.retrieved.filter(r => r.cited).map(r => r.source))];
+    if (cited.length === 0) return null;
+    const row = el('div', 'sources');
+    row.appendChild(el('span', 'sources-label', 'Sources'));
+    cited.forEach(source => {
+      const chunk = firstChunkBySource.get(source);
+      const pill = el('a', 'source-pill');
+      pill.href = docUrl(source, chunk.chunk_index);
+      pill.target = '_blank';
+      pill.rel = 'noopener';
+      pill.innerHTML = DOC_ICON;
+      pill.append(chunk.title);
+      pill.title = `Open ${source} at the passage used`;
+      row.appendChild(pill);
+    });
+    return row;
+  }
 
+  function buildInspector(data) {
+    const totalMs = data.timing.retrieve_ms + data.timing.generate_ms;
+    const citedCount = data.retrieved.filter(r => r.cited).length;
+
+    const details = el('details', 'inspector');
+    const summary = el('summary');
+    summary.append(
+      el('span', 'inspector-title', 'How this answer was found'),
+      el('span', 'inspector-meta',
+        `${data.retrieved.length} passages · ${citedCount} cited · ${seconds(totalMs)}`),
+    );
+    details.appendChild(summary);
+
+    const body = el('div', 'inspector-body');
+
+    const stats = el('div', 'stats');
+    [
+      ['Retrieval', seconds(data.timing.retrieve_ms)],
+      ['Generation', seconds(data.timing.generate_ms)],
+      ['Tokens in / out', `${fmt(data.usage.input_tokens)} / ${fmt(data.usage.output_tokens)}`],
+      ['Model', data.usage.model],
+    ].forEach(([label, value]) => {
+      const stat = el('div', 'stat');
+      stat.append(el('div', 'stat-label', label), el('div', 'stat-value', value));
+      stats.appendChild(stat);
+    });
+    body.appendChild(stats);
+
+    const list = el('ol', 'passages');
+    list.setAttribute('aria-label', 'Retrieved passages, closest first');
+    data.retrieved.forEach((r, i) => {
+      const item = el('li', r.cited ? 'passage cited' : 'passage');
+      const head = el('div', 'passage-head');
+      head.append(
+        el('span', 'rank', `#${i + 1}`),
+        el('span', 'passage-title', r.title),
+        el('span', 'passage-sub', `chunk ${r.chunk_index} · distance ${r.distance.toFixed(3)}`),
+      );
+      const chip = el('span', r.cited ? 'chip good' : 'chip neutral');
+      chip.innerHTML = r.cited ? CHECK : INFO;
+      chip.append(r.cited ? 'Cited' : 'Not cited');
+      head.appendChild(chip);
+
+      const links = el('div', 'passage-links');
+      const open = el('a', '', 'Open in handbook');
+      open.href = docUrl(r.source, r.chunk_index);
+      open.target = '_blank';
+      open.rel = 'noopener';
+      const textToggle = el('details');
+      textToggle.append(el('summary', '', 'Show passage text'), el('div', 'passage-text', r.text));
+      links.append(open);
+      item.append(head, links, textToggle);
+      list.appendChild(item);
+    });
+    body.appendChild(list);
+
+    const of = indexSize ? ` of ${indexSize}` : '';
+    body.appendChild(el('p', 'inspector-note',
+      `The question was embedded and compared with every chunk in the handbook; these are the ${data.top_k}${of} closest, ` +
+      'ranked by distance (lower is closer). Only these passages were sent to the model. "Cited" means the answer names that document.'));
+
+    details.appendChild(body);
+    return details;
+  }
+
+  function appendAnswer(data) {
+    const firstChunkBySource = new Map();
+    data.retrieved.forEach(r => { if (!firstChunkBySource.has(r.source)) firstChunkBySource.set(r.source, r); });
+
+    const msg = el('div', 'message assistant');
+    const meta = el('div', 'message-meta', 'HR Assistant');
+    if (data.refused) {
+      const chip = el('span', 'chip warn');
+      chip.innerHTML = INFO;
+      chip.append('Not in the handbook');
+      meta.appendChild(chip);
+    }
+
+    const bubble = el('div', 'bubble md');
+    bubble.innerHTML = DOMPurify.sanitize(marked.parse(linkCitations(data.answer, firstChunkBySource)));
+    bubble.querySelectorAll('a[href^="/docs/"]').forEach(a => {
+      a.classList.add('cite');
+      a.target = '_blank';
+      a.rel = 'noopener';
+    });
+
+    msg.append(meta, bubble);
+    const sources = buildSources(data, firstChunkBySource);
+    if (sources) msg.appendChild(sources);
+    msg.appendChild(buildInspector(data));
+    threadInner.appendChild(msg);
+    scrollToBottom();
+  }
+
+  function appendError(question, message) {
+    const msg = el('div', 'message assistant');
+    const bubble = el('div', 'bubble error');
+    bubble.setAttribute('role', 'alert');
+    bubble.append(el('div', 'error-title', 'Couldn\'t get an answer'), el('div', 'error-detail', message));
+    const retry = el('button', 'retry', 'Try again');
+    retry.type = 'button';
+    retry.addEventListener('click', () => { msg.remove(); ask(question, { echo: false }); });
+    bubble.appendChild(retry);
+    msg.append(el('div', 'message-meta', 'HR Assistant'), bubble);
+    threadInner.appendChild(msg);
+    scrollToBottom();
+  }
+
+  // ── Model settings ───────────────────────────────────────────────────────
+  // The provider choice and any keys typed here live in sessionStorage: they
+  // survive a reload but not closing the tab. Keys go to the server as
+  // headers on each /ask and nowhere else.
+  const STORE_KEY = 'northwind.modelSettings';
+  const PROVIDER_LABEL = { anthropic: 'Anthropic', openai: 'OpenAI' };
+  const settingsPanel = document.getElementById('settings');
+  const modelBtn = document.getElementById('model-btn');
+  const openaiInput = document.getElementById('openai-key');
+  const anthropicInput = document.getElementById('anthropic-key');
+  const settingsError = document.getElementById('settings-error');
+
+  let serverConfig = null;
+  const settings = { provider: null, keys: { openai: '', anthropic: '' } };
+
+  function loadSettings() {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(STORE_KEY) || 'null');
+      if (saved && typeof saved === 'object') {
+        if (saved.provider in PROVIDER_LABEL) settings.provider = saved.provider;
+        settings.keys.openai = typeof saved.keys?.openai === 'string' ? saved.keys.openai : '';
+        settings.keys.anthropic = typeof saved.keys?.anthropic === 'string' ? saved.keys.anthropic : '';
+      }
+    } catch (err) {
+      console.warn('Model settings could not be read; starting fresh.', err);
+    }
+  }
+
+  function saveSettings() {
+    try {
+      sessionStorage.setItem(STORE_KEY, JSON.stringify(settings));
+    } catch (err) {
+      console.warn('Model settings could not be saved; they will last until reload.', err);
+    }
+  }
+
+  function serverHasKey(provider) { return Boolean(serverConfig?.server_keys?.[provider]); }
+
+  function keyHint(provider, purpose) {
+    if (settings.keys[provider]) return { text: `Using the key you entered, for ${purpose}.`, required: false };
+    if (serverHasKey(provider)) return { text: `Optional: the server has its own key. Used for ${purpose}.`, required: false };
+    return { text: `Required: the server has no ${PROVIDER_LABEL[provider]} key. Used for ${purpose}.`, required: true };
+  }
+
+  function missingKey() {
+    const needed = ['openai', settings.provider];
+    return needed.some(p => !settings.keys[p] && !serverHasKey(p));
+  }
+
+  function renderSettings() {
+    const provider = settings.provider;
+    const model = serverConfig?.models?.[provider] || '';
+    document.getElementById('model-provider').textContent = PROVIDER_LABEL[provider];
+    document.getElementById('model-name').textContent = model;
+    modelBtn.querySelector('.key-dot')?.remove();
+    if (serverConfig && missingKey()) {
+      const dot = el('span', 'key-dot');
+      dot.setAttribute('aria-label', 'API key needed');
+      dot.title = 'API key needed';
+      modelBtn.appendChild(dot);
+    }
+    modelBtn.setAttribute('aria-label', `Model settings: ${PROVIDER_LABEL[provider]} ${model}`.trim());
+
+    const seg = document.getElementById('provider-seg');
+    seg.replaceChildren(...Object.keys(PROVIDER_LABEL).map(p => {
+      const b = el('button', '', PROVIDER_LABEL[p]);
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(p === provider));
+      b.addEventListener('click', () => { settings.provider = p; saveSettings(); renderSettings(); });
+      return b;
+    }));
+    document.getElementById('provider-hint').textContent = model ? `Answers are written by ${model}.` : '';
+
+    const openaiPurpose = provider === 'openai' ? 'search and answers' : 'search (query embeddings)';
+    [['openai', openaiPurpose], ['anthropic', 'answers']].forEach(([p, purpose]) => {
+      const hint = document.getElementById(`${p}-hint`);
+      const { text, required } = keyHint(p, purpose);
+      hint.textContent = text;
+      hint.classList.toggle('required', required);
+    });
+    document.getElementById('anthropic-field').hidden = provider !== 'anthropic';
+  }
+
+  function openSettings(errorMessage) {
+    settingsError.hidden = !errorMessage;
+    settingsError.textContent = errorMessage || '';
+    settingsPanel.hidden = false;
+    modelBtn.setAttribute('aria-expanded', 'true');
+    const firstEmpty = [openaiInput, anthropicInput].find(i => !i.closest('[hidden]') && !i.value);
+    (firstEmpty || openaiInput).focus();
+  }
+
+  function closeSettings({ restoreFocus = true } = {}) {
+    if (settingsPanel.hidden) return;
+    settingsPanel.hidden = true;
+    settingsError.hidden = true;
+    modelBtn.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) modelBtn.focus();
+  }
+
+  [[openaiInput, 'openai'], [anthropicInput, 'anthropic']].forEach(([input, p]) => {
+    input.addEventListener('input', () => { settings.keys[p] = input.value.trim(); saveSettings(); renderSettings(); });
+  });
+  modelBtn.addEventListener('click', () => (settingsPanel.hidden ? openSettings() : closeSettings()));
+  document.getElementById('settings-done').addEventListener('click', () => closeSettings());
+  document.getElementById('forget-keys').addEventListener('click', () => {
+    settings.keys = { openai: '', anthropic: '' };
+    openaiInput.value = anthropicInput.value = '';
+    saveSettings();
+    renderSettings();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
+  document.addEventListener('click', e => {
+    // composedPath, not contains(): the provider toggle re-renders its buttons,
+    // so the clicked node may already be detached when this runs.
+    const path = e.composedPath();
+    if (!settingsPanel.hidden && !path.includes(settingsPanel) && !path.includes(modelBtn)) {
+      closeSettings({ restoreFocus: false });
+    }
+  });
+
+  async function initSettings() {
+    loadSettings();
+    openaiInput.value = settings.keys.openai;
+    anthropicInput.value = settings.keys.anthropic;
+    try {
+      const res = await fetch('/api/config');
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      serverConfig = await res.json();
+    } catch (err) {
+      console.warn('Could not load /api/config; using the server default provider.', err);
+    }
+    settings.provider = settings.provider || serverConfig?.default_provider || 'anthropic';
+    renderSettings();
+  }
+
+  function askHeaders() {
+    const headers = { 'Content-Type': 'application/json' };
+    // Only the keys this request needs: OpenAI for search, plus the answer provider's.
+    if (settings.keys.openai) headers['X-OpenAI-Key'] = settings.keys.openai;
+    if (settings.provider === 'anthropic' && settings.keys.anthropic) headers['X-Anthropic-Key'] = settings.keys.anthropic;
+    return headers;
+  }
+
+  // ── Asking ───────────────────────────────────────────────────────────────
+  function setLoading(on) { sendBtn.disabled = on; textarea.disabled = on; }
+
+  async function ask(question, { echo = true } = {}) {
+    if (echo) appendUser(question);
+    const thinking = appendThinking();
+    setLoading(true);
     try {
       const res = await fetch('/ask', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question }),
+        headers: askHeaders(),
+        body: JSON.stringify({ question, provider: settings.provider }),
       });
-
+      const data = await res.json().catch(() => ({}));
+      thinking.stop();
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || `Server error ${res.status}`);
+        const detail = typeof data.detail === 'string' ? data.detail : `The server returned ${res.status}.`;
+        appendError(question, detail);
+        // Missing or rejected key: open the settings where it can be fixed.
+        if (/api key/i.test(detail)) openSettings(detail);
+      } else {
+        appendAnswer(data);
       }
-
-      const data = await res.json();
-      typingEl._stopTimer?.();
-      typingEl.remove();
-      appendMessage('assistant', data.answer, data.citations || []);
     } catch (err) {
-      typingEl._stopTimer?.();
-      typingEl.remove();
-      appendMessage('assistant', `Sorry, something went wrong: ${err.message}`);
+      thinking.stop();
+      appendError(question, `Couldn't reach the server (${err.message}). Is it running?`);
     } finally {
       setLoading(false);
       textarea.focus();
@@ -679,25 +726,20 @@
     ask(q);
   }
 
-  textarea.addEventListener('input', autoResize);
-
+  textarea.addEventListener('input', () => {
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+  });
   textarea.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      submit();
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
   });
-
-  sendBtn.addEventListener('click', submit);
-
+  document.getElementById('ask-form').addEventListener('submit', e => { e.preventDefault(); submit(); });
   document.querySelectorAll('.suggestion').forEach(btn => {
-    btn.addEventListener('click', () => {
-      textarea.value = btn.textContent;
-      autoResize();
-      submit();
-    });
+    btn.addEventListener('click', () => ask(btn.dataset.q));
   });
 
+  checkIndex();
+  initSettings();
   textarea.focus();
 </script>
 </body>

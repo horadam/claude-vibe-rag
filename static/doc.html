@@ -3,216 +3,166 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Northwind Robotics — HR Handbook</title>
+  <title>Handbook · Northwind Robotics</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/app.css" />
   <script src="/static/marked.min.js"></script>
   <script src="/static/purify.min.js"></script>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { min-height: 100vh; }
+    .page {
+      max-width: 1040px; margin: 0 auto; padding: 32px 20px 64px;
+      display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; align-items: start;
+    }
+    .toc { position: sticky; top: 20px; font-size: 13.5px; }
+    .toc h2 {
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+      color: var(--faint); margin-bottom: 8px;
+    }
+    .toc ul { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+    .toc a {
+      display: block; padding: 6px 10px; border-radius: 8px; color: var(--text-2); text-decoration: none; line-height: 1.35;
+    }
+    .toc a:hover { background: var(--surface); color: var(--accent); }
+    .toc a[aria-current="page"] { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: var(--shadow); }
 
-    :root {
-      --navy:      #0f2542;
-      --blue:      #2563eb;
-      --slate-50:  #f8fafc;
-      --slate-100: #f1f5f9;
-      --slate-200: #e2e8f0;
-      --slate-400: #94a3b8;
-      --slate-500: #64748b;
-      --slate-700: #334155;
-      --slate-900: #0f172a;
-      --white:     #ffffff;
+    .passage-banner {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--highlight-edge);
+      border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 13.5px; color: var(--text-2);
     }
+    .passage-banner button {
+      margin-left: auto; font: inherit; font-size: 12.5px; background: none; border: 1px solid var(--border-strong);
+      color: var(--text-2); border-radius: 8px; padding: 4px 10px; cursor: pointer;
+    }
+    .passage-banner button:hover { border-color: var(--accent); color: var(--accent); }
+    .passage-banner.error { border-left-color: var(--bad); }
 
-    html, body {
-      min-height: 100%;
-      font-family: 'Inter', system-ui, sans-serif;
-      background: var(--slate-100);
-      color: var(--slate-900);
-      -webkit-font-smoothing: antialiased;
+    .card {
+      background: var(--surface); border-radius: 14px; box-shadow: var(--shadow);
+      padding: 40px 48px 48px; font-size: 15px; line-height: 1.75; color: var(--text-2);
     }
+    .card.md h1 { font-size: 26px; letter-spacing: -.02em; color: var(--text); margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .card.md h2 { font-size: 17px; margin-top: 28px; }
+    .card.md h3 { font-size: 15px; }
+    .card.md p { margin-bottom: 14px; }
+    .card.md strong { color: var(--text); }
 
-    header {
-      background: var(--navy);
-      padding: 0 24px;
-      height: 62px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,.25);
+    .hl {
+      background: var(--highlight); box-shadow: -10px 0 0 var(--highlight), 10px 0 0 var(--highlight);
+      border-radius: 2px; transition: background .3s;
     }
+    li.hl, tr.hl { box-shadow: none; }
+    .hl-start { scroll-margin-top: 90px; }
 
-    .logo {
-      width: 34px; height: 34px;
-      background: var(--blue);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      text-decoration: none;
-    }
-    .logo svg { width: 20px; height: 20px; fill: white; }
-
-    .header-text { display: flex; flex-direction: column; }
-    .header-title   { font-size: 15px; font-weight: 700; color: white; letter-spacing: -.01em; }
-    .header-subtitle { font-size: 11px; color: rgba(255,255,255,.5); font-weight: 500; text-transform: uppercase; letter-spacing: .05em; }
-
-    .back-link {
-      margin-left: auto;
-      font-size: 13px;
-      font-weight: 500;
-      color: rgba(255,255,255,.7);
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: color .15s;
-    }
-    .back-link:hover { color: white; }
-    .back-link svg { width: 16px; height: 16px; stroke: currentColor; fill: none; }
-
-    main {
-      max-width: 740px;
-      margin: 40px auto;
-      padding: 0 20px 60px;
-    }
-
-    .doc-card {
-      background: var(--white);
-      border-radius: 16px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 20px rgba(0,0,0,.06);
-      padding: 40px 48px;
-    }
-
-    /* ── Markdown styles ── */
-    .doc-card h1 {
-      font-size: 1.6em;
-      font-weight: 700;
-      color: var(--slate-900);
-      margin-bottom: .6em;
-      padding-bottom: .4em;
-      border-bottom: 2px solid var(--slate-100);
-    }
-    .doc-card h2 {
-      font-size: 1.15em;
-      font-weight: 700;
-      color: var(--slate-900);
-      margin-top: 1.6em;
-      margin-bottom: .4em;
-    }
-    .doc-card h3 {
-      font-size: .95em;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      color: var(--slate-500);
-      margin-top: 1.4em;
-      margin-bottom: .35em;
-    }
-    .doc-card h1:first-child,
-    .doc-card h2:first-child { margin-top: 0; }
-
-    .doc-card p {
-      font-size: 15px;
-      line-height: 1.75;
-      color: var(--slate-700);
-      margin-bottom: .85em;
-    }
-    .doc-card p:last-child { margin-bottom: 0; }
-
-    .doc-card strong { font-weight: 650; color: var(--slate-900); }
-    .doc-card em     { font-style: italic; }
-
-    .doc-card ul, .doc-card ol {
-      padding-left: 1.5em;
-      margin-bottom: .85em;
-      font-size: 15px;
-      line-height: 1.75;
-      color: var(--slate-700);
-    }
-    .doc-card li { margin-bottom: .3em; }
-
-    .doc-card table {
-      border-collapse: collapse;
-      width: 100%;
-      font-size: 14px;
-      margin-bottom: 1em;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .doc-card th {
-      background: var(--slate-50);
-      font-weight: 600;
-      color: var(--slate-700);
-      padding: 9px 14px;
-      text-align: left;
-      border-bottom: 1px solid var(--slate-200);
-    }
-    .doc-card td {
-      padding: 9px 14px;
-      color: var(--slate-700);
-      border-bottom: 1px solid var(--slate-100);
-    }
-    .doc-card tr:last-child td { border-bottom: none; }
-    .doc-card tr:nth-child(even) td { background: var(--slate-50); }
-
-    .doc-card code {
-      font-family: ui-monospace, 'SF Mono', monospace;
-      font-size: .85em;
-      background: var(--slate-100);
-      border: 1px solid var(--slate-200);
-      padding: 1px 5px;
-      border-radius: 4px;
-    }
-    .doc-card pre {
-      background: var(--slate-100);
-      border: 1px solid var(--slate-200);
-      border-radius: 8px;
-      padding: 14px 16px;
-      overflow-x: auto;
-      margin-bottom: .85em;
-    }
-    .doc-card pre code { background: none; border: none; padding: 0; }
-
-    .doc-card blockquote {
-      border-left: 3px solid var(--slate-200);
-      padding-left: 16px;
-      color: var(--slate-500);
-      margin-bottom: .85em;
-    }
-
-    .doc-card hr {
-      border: none;
-      border-top: 1px solid var(--slate-200);
-      margin: 1.4em 0;
+    @media (max-width: 760px) {
+      .page { grid-template-columns: 1fr; padding: 18px 16px 48px; gap: 16px; }
+      .toc { position: static; }
+      .toc ul { flex-direction: row; flex-wrap: wrap; gap: 6px; }
+      .toc a { background: var(--surface); border: 1px solid var(--border); padding: 5px 10px; font-size: 12.5px; }
+      .card { padding: 24px 20px 28px; }
+      .card.md h1 { font-size: 22px; }
     }
   </style>
 </head>
 <body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </span>
+      <span class="brand-text">
+        <span class="brand-title">Northwind Robotics</span>
+        <span class="brand-sub">HR Handbook</span>
+      </span>
+    </a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/">Assistant</a>
+      <a href="/evals">Evals</a>
+    </nav>
+  </header>
 
-<header>
-  <a class="logo" href="/">
-    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-  </a>
-  <div class="header-text">
-    <span class="header-title">Northwind Robotics</span>
-    <span class="header-subtitle">HR Handbook</span>
+  <div class="page">
+    <nav class="toc" aria-label="Handbook documents">
+      <h2>Handbook</h2>
+      <ul id="toc"></ul>
+    </nav>
+    <main>
+      <div id="banner-slot"></div>
+      <article class="card md" id="content"></article>
+    </main>
   </div>
-  <a class="back-link" href="/">
-    <svg viewBox="0 0 24 24" stroke-width="1.5">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
-    </svg>
-    Back to assistant
-  </a>
-</header>
 
-<main>
-  <div class="doc-card" id="content"></div>
-</main>
+  <script type="application/json" id="doc-data">__DOC_JSON__</script>
+  <script>
+    const data = JSON.parse(document.getElementById('doc-data').textContent);
+    const content = document.getElementById('content');
+    content.innerHTML = DOMPurify.sanitize(marked.parse(data.markdown));
+    const title = content.querySelector('h1');
+    if (title) document.title = `${title.textContent} · Northwind Robotics`;
 
-<script>
-  const raw = `__MARKDOWN__`;
-  document.getElementById('content').innerHTML = DOMPurify.sanitize(marked.parse(raw));
-</script>
+    const toc = document.getElementById('toc');
+    data.documents.forEach(d => {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = `/docs/${encodeURIComponent(d.filename)}`;
+      a.textContent = d.title;
+      if (d.filename === data.filename) a.setAttribute('aria-current', 'page');
+      li.appendChild(a);
+      toc.appendChild(li);
+    });
+
+    const BLOCKS = 'h1, h2, h3, h4, p, li, tr, blockquote';
+    const norm = s => s.replace(/\s+/g, ' ').trim().toLowerCase();
+
+    function banner(text, { error = false } = {}) {
+      const box = document.createElement('div');
+      box.className = error ? 'passage-banner error' : 'passage-banner';
+      box.setAttribute('role', 'status');
+      box.append(text);
+      if (!error) {
+        const clear = document.createElement('button');
+        clear.type = 'button';
+        clear.textContent = 'Clear highlight';
+        clear.addEventListener('click', () => {
+          content.querySelectorAll('.hl').forEach(n => n.classList.remove('hl'));
+          box.remove();
+          history.replaceState(null, '', location.pathname);
+        });
+        box.appendChild(clear);
+      }
+      document.getElementById('banner-slot').replaceChildren(box);
+    }
+
+    // Highlight the blocks of this page that belong to the retrieved chunk.
+    // Chunks are whole paragraphs joined together, so rendering the chunk's
+    // markdown and matching block by block finds exactly that passage.
+    async function highlightChunk(chunkIndex) {
+      const res = await fetch(`/api/passages/${encodeURIComponent(data.filename)}/${chunkIndex}`);
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        banner(`Couldn't load the retrieved passage: ${body.detail || res.status}`, { error: true });
+        return;
+      }
+      const scratch = document.createElement('div');
+      scratch.innerHTML = DOMPurify.sanitize(marked.parse(body.text));
+      const wanted = new Set([...scratch.querySelectorAll(BLOCKS)].map(n => norm(n.textContent)));
+
+      const matches = [...content.querySelectorAll(BLOCKS)].filter(n => wanted.has(norm(n.textContent)));
+      matches.forEach(n => n.classList.add('hl'));
+      if (matches.length === 0) {
+        banner('The retrieved passage could not be located on this page.', { error: true });
+        return;
+      }
+      banner(`Highlighted: chunk ${chunkIndex}, the passage the assistant retrieved from this document.`);
+      matches[0].classList.add('hl-start');
+      matches[0].scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+
+    const chunk = new URLSearchParams(location.search).get('chunk');
+    if (chunk !== null && /^\d+$/.test(chunk)) highlightChunk(Number(chunk));
+  </script>
 </body>
 </html>
