@@ -6,6 +6,8 @@ evaluate — plus a polished chat UI.
 
 **Stack:** FastAPI · ChromaDB (build) + JSON vector search (query) · OpenAI embeddings · Claude or GPT for answers · Vanilla JS
 
+**Live:** [eval results](https://rag-practice-kappa.vercel.app/evals) (no key needed) · [chat](https://rag-practice-kappa.vercel.app) (bring your own OpenAI key; Anthropic optional)
+
 ---
 
 ### Demo
@@ -19,8 +21,8 @@ https://github.com/user-attachments/assets/f429311e-7f50-4b9b-ade0-ab9aa5efac46
 **Prerequisites:** Python 3.11–3.14 (pinned to 3.13 in `.python-version`; chromadb's onnxruntime has no 3.15 wheels yet), [uv](https://docs.astral.sh/uv/)
 
 ```bash
-git clone <repo>
-cd claude_vibe_rag
+git clone https://github.com/horadam/handbook-rag.git
+cd handbook-rag
 uv sync
 cp .env.example .env
 ```
