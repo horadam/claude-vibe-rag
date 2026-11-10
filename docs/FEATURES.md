@@ -485,8 +485,9 @@ fix it.
   Service Unavailable** (not ready yet).
 - `retrieve()` now opens the collection *before* calling the embedding API,
   so a missing index fails before any paid call.
-- `/health` and the server no longer touch Chroma directly; they go through
+- `/health` and the server no longer touch the index directly; they go through
   `index_size()` and `get_chunk()` in `retrieve.py`, as `CLAUDE.md` requires.
+  (Since Part 4 that index is a JSON file, not Chroma.)
 
 **Say it in 30 seconds.** "Errors are mapped to status codes that mean
 something: 502 when an upstream model provider fails, 503 when the index or
@@ -609,3 +610,50 @@ runs use the same embeddings. Then explain why.
 - The eval CLI uses `.env` settings only; the UI toggle affects the chat.
 - The refusal check looks for one exact sentence. GPT may paraphrase it more
   often than Claude; the out-of-scope cases will show that.
+
+---
+
+## Part 4 — Deploying without Chroma at query time (2026-11-10)
+
+### 13. A JSON index searched in plain Python
+
+**What it is.** Ingest still builds the Chroma collection, then writes every
+chunk and its embedding to `index/hr_handbook.json`. The server searches that
+file and never imports Chroma.
+
+**Why it matters.** Serverless hosts such as Vercel have a read-only disk, a
+bundle size limit and cold starts. Chroma at query time meant ~308 MB of
+dependencies, a SQLite file opened read-write, and a slow import. With 14
+chunks, an exact search is 14 distance calculations.
+
+**How it works.**
+- `export_index()` in [src/ingest.py](../src/ingest.py) reads the collection
+  with its embeddings and writes them as JSON, sorted by source and chunk.
+  `ingest_cli.py --export-only` reruns just this step, with no API calls.
+- `load_index()` in [src/retrieve.py](../src/retrieve.py) parses the file once
+  and re-reads it only when its modification time changes. A missing file is
+  the same `RuntimeError` (so the same 503) as a missing collection was.
+- `search()` sorts the chunks by `squared_l2()`, Chroma's default measure, so
+  distances match earlier eval runs. This was checked against Chroma's own
+  query results before Chroma was removed from the server.
+- `chromadb` moved to an opt-in `ingest` dependency group, so Vercel doesn't
+  install it (`uv sync --group ingest` does, locally), and
+  [tests/test_retrieve.py](../tests/test_retrieve.py) checks that importing
+  the server doesn't load it.
+
+**Say it in 30 seconds.** "A vector database earns its place with an
+approximate index over many vectors. This corpus has 14 chunks, so the server
+does an exact search over a committed JSON file. Chroma is still used to build
+the index, and the distances match what it reported."
+
+**Questions you might get.**
+- *When would you bring a vector database back?* When an exact scan gets too
+  slow, which happens at many thousands of chunks in plain Python, or when the
+  index has to change without a redeploy.
+- *Why squared L2, not cosine?* For unit-length vectors they rank identically,
+  and keeping Chroma's measure keeps old and new eval runs comparable.
+
+**Try it.** Run `uv run --group ingest python ingest_cli.py --export-only`, then open the JSON
+file. How many numbers does each embedding have, and why does the file take
+about 440 KB?
+

@@ -12,7 +12,8 @@ to end — ingest, retrieve, generate, evaluate — not for scale.
 - `uv` for dependency and venv management
 - FastAPI + Uvicorn for the HTTP layer
 - OpenAI `text-embedding-3-small` for embeddings
-- ChromaDB (local persistent client at `./chroma_db`) for vector storage
+- ChromaDB (local persistent client at `./chroma_db`) to build the index; queries
+  search its JSON export (`index/hr_handbook.json`), so the server runs without Chroma
 - Anthropic `claude-sonnet-4-5` for answer generation
 - `python-dotenv` for secrets
 
@@ -34,11 +35,12 @@ No LangChain, no LlamaIndex. The whole point is to see the moving parts.
 │   ├── __init__.py
 │   ├── config.py              # env loading, model names, constants
 │   ├── ingest.py              # chunking + embedding + chroma upsert
-│   ├── retrieve.py            # query embedding + chroma search
+│   ├── retrieve.py            # query embedding + search over the JSON index
 │   ├── generate.py            # prompt assembly + Claude call
 │   └── server.py              # FastAPI app
 ├── ingest_cli.py              # `python ingest_cli.py` runs ingestion
 ├── eval_cli.py                # `python eval_cli.py` runs the eval harness
+├── index/hr_handbook.json     # committed: chunks + embeddings, exported at ingest
 └── chroma_db/                 # gitignored
 ```
 
@@ -53,11 +55,14 @@ No LangChain, no LlamaIndex. The whole point is to see the moving parts.
 - Upsert into a single Chroma collection named `hr_handbook`.
 - Print per-file chunk counts and total chunks/tokens at the end.
 - Re-running ingestion should be idempotent — clear the collection first.
+- Export every chunk with its embedding to `index/hr_handbook.json`.
 
 ## Retrieval
 
 - Embed the user question with the same model used at ingest.
-- Query Chroma for top-k=5 chunks.
+- Rank every chunk in `index/hr_handbook.json` by squared L2 distance (Chroma's
+  default measure) and take the top-k=5. The corpus is small enough for an exact
+  search in plain Python.
 - Return chunks with their distances and metadata.
 
 ## Generation
@@ -154,7 +159,7 @@ Deliberately include:
 
 ## Definition of done
 
-1. `uv run python ingest_cli.py` ingests the corpus cleanly.
+1. `uv run --group ingest python ingest_cli.py` ingests the corpus cleanly.
 2. `uvicorn src.server:app --reload` boots the API.
 3. `curl -X POST localhost:8000/ask -H 'content-type: application/json' -d '{"question":"..."}'` returns a grounded answer with citations.
 4. `uv run python eval_cli.py` runs the eval set and prints a pass-rate summary.
