@@ -49,6 +49,9 @@ JUDGE_MODEL: str = JUDGE_MODELS[JUDGE_PROVIDER]
 # Paths
 CORPUS_DIR: Path = Path("corpus")
 CHROMA_DIR: str = "./chroma_db"
+# The query-time index: every chunk with its embedding, exported from Chroma
+# at ingest and committed, so a read-only host can search it without Chroma.
+INDEX_FILE: Path = Path("index/hr_handbook.json")
 EVAL_QUESTIONS_FILE: Path = Path("evals/questions.json")
 EVAL_RUNS_DIR: Path = Path("evals/runs")
 EVAL_RESULTS_FILE: Path = Path("evals/results.md")

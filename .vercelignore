@@ -1,0 +1,13 @@
+# Files the Vercel deploy doesn't need. Never upload .env: visitors bring
+# their own keys, and the server has none.
+.env
+.venv/
+.claude/
+chroma_db/
+tests/
+docs/
+evals/runs/*
+!evals/runs/20261109T143938Z.json
+!evals/runs/20261109T150357Z-prompt-v2.json
+__pycache__/
+*.pyc

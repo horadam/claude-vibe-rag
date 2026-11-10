@@ -4,7 +4,9 @@ A minimal RAG service that answers questions about a fictional company's HR
 policies. Covers the full loop end to end: ingest → retrieve → generate →
 evaluate — plus a polished chat UI.
 
-**Stack:** FastAPI · ChromaDB · OpenAI embeddings · Claude or GPT for answers · Vanilla JS
+**Stack:** FastAPI · ChromaDB (build) + JSON vector search (query) · OpenAI embeddings · Claude or GPT for answers · Vanilla JS
+
+**Live:** [eval results](https://handbook-rag.vercel.app/evals) (no key needed) · [chat](https://handbook-rag.vercel.app) (bring your own OpenAI key; Anthropic optional)
 
 ---
 
@@ -19,8 +21,8 @@ https://github.com/user-attachments/assets/f429311e-7f50-4b9b-ade0-ab9aa5efac46
 **Prerequisites:** Python 3.11–3.14 (pinned to 3.13 in `.python-version`; chromadb's onnxruntime has no 3.15 wheels yet), [uv](https://docs.astral.sh/uv/)
 
 ```bash
-git clone <repo>
-cd claude_vibe_rag
+git clone https://github.com/horadam/handbook-rag.git
+cd handbook-rag
 uv sync
 cp .env.example .env
 ```
@@ -49,12 +51,16 @@ only and never saves or logs it.
 
 ### 1. Ingest the corpus
 
-Chunks, embeds, and upserts the HR handbook into ChromaDB. Safe to re-run —
-clears the collection first.
+Chunks, embeds, and upserts the HR handbook into ChromaDB, then exports the
+chunks and embeddings to `index/hr_handbook.json`, which the server searches.
+Safe to re-run: it clears the collection first.
 
 ```bash
-uv run python ingest_cli.py
+uv run --group ingest python ingest_cli.py
 ```
+
+Chroma is in the opt-in `ingest` dependency group, because the server doesn't
+need it; `uv sync --group ingest` installs it for good.
 
 ### 2. Start the server
 
@@ -92,7 +98,7 @@ uv run python eval_cli.py --k 3 --label k3 --compare latest   # try a change, di
 uv run python eval_cli.py --ids pip_duration,out_of_scope_ticker
 ```
 
-Each run is saved to `evals/runs/<run-id>.json` (gitignored) with its config,
+Each run is saved to `evals/runs/<run-id>.json` (gitignored, apart from two committed samples) with its config,
 git commit and per-case detail. A full, unfiltered run also rewrites
 [`evals/results.md`](evals/results.md). The exit code is non-zero when any case
 fails, so it can gate CI.
@@ -110,6 +116,66 @@ uv run python -m unittest
 
 ---
 
+## Deploying
+
+The public demo runs on Vercel's Python functions. Visitors bring their own
+keys through **Model settings**; the server has no keys, so `/api/config`
+reports none and every question uses the visitor's key for that request only.
+
+### Why queries don't use Chroma
+
+Before deploying, the stack was checked against Vercel (2026-11-10):
+
+| Constraint | Vercel | With Chroma at query time |
+|---|---|---|
+| Bundle size | 500 MB uncompressed for Python | ~308 MB installed on Linux, mostly from `chromadb` (Rust bindings, onnxruntime, numpy, kubernetes, grpc); ~54 MB without it |
+| Filesystem | Read-only apart from `/tmp` | `PersistentClient` opens `chroma_db/` read-write, so it would have to be copied to `/tmp` first |
+| State | Nothing persists between requests | `chroma_db/` and `evals/runs/` were gitignored, so nothing to search or show |
+| Cold starts | Imports run again after the function has been idle | Loading `chromadb` is the slowest part of startup |
+
+The index holds only 14 chunks, so Chroma isn't needed to search it. Ingest
+still builds the Chroma collection, then exports every chunk with its
+embedding to [`index/hr_handbook.json`](index/hr_handbook.json), which is
+committed. At query time, [`src/retrieve.py`](src/retrieve.py) ranks those
+chunks with a plain-Python loop: no numpy and no new dependency. It uses the
+same squared-L2 distance Chroma reported, so results and eval numbers are
+unchanged. `chromadb` is now in the opt-in `ingest` dependency group, so
+Vercel doesn't install it and the server never imports it. Vercel reported a
+283 MB bundle while Chroma was still installed; without it the bundle is small
+enough that no size warning appears.
+
+The other option was to keep Chroma and copy the index to `/tmp` on every
+cold start. It needed fewer code changes, but kept the large bundle and the
+slow start.
+
+### What's committed for the deploy
+
+- `index/hr_handbook.json`: rebuild it with
+  `uv run --group ingest python ingest_cli.py`, or add `--export-only` to rewrite it from the existing Chroma collection
+  without new embedding calls.
+- Two sample eval runs in `evals/runs/`, shown read-only on `/evals`. Other
+  runs stay gitignored.
+- `.vercelignore` keeps `.env`, `.venv`, `chroma_db/` and the tests out of
+  the upload.
+
+### Deploy
+
+Vercel detects the FastAPI app in `src/server.py` and installs dependencies
+from `pyproject.toml` and `uv.lock`. Don't add server keys unless you want to
+pay for visitors' questions.
+
+The Vercel project `handbook-rag` is connected to this GitHub repo: a push
+to `master` deploys to production, and every pull request gets its own
+preview URL. To deploy by hand from a linked checkout instead:
+
+```bash
+npx vercel deploy --prod
+```
+
+Live: https://handbook-rag.vercel.app
+
+---
+
 ## Project layout
 
 ```
@@ -124,8 +190,8 @@ static/
   purify.min.js  HTML sanitiser (vendored)
 src/
   config.py      Constants and env loading
-  ingest.py      Chunking, embedding, Chroma upsert
-  retrieve.py    Query embedding + vector search
+  ingest.py      Chunking, embedding, Chroma upsert, JSON export
+  retrieve.py    Query embedding + search over the JSON index
   generate.py    Prompt assembly + answer generation
   llm.py         Anthropic / OpenAI adapter (the only provider-specific code)
   server.py      FastAPI app
@@ -134,7 +200,8 @@ tests/           Offline unit tests
 docs/FEATURES.md How each feature works, in plain language
 ingest_cli.py    CLI entry point for ingestion
 eval_cli.py      Eval harness CLI
-chroma_db/       Local vector store (gitignored, created on first ingest)
+index/           Exported chunks and embeddings, searched by the server (committed)
+chroma_db/       Local Chroma store used to build the index (gitignored)
 ```
 
 ---
@@ -143,10 +210,13 @@ chroma_db/       Local vector store (gitignored, created on first ingest)
 
 1. **Ingest** — Each `.md` file in `corpus/` is split into ~500-token chunks
    (paragraph-boundary, with overlap). Chunks are embedded via OpenAI
-   `text-embedding-3-small` and stored in a local ChromaDB collection.
+   `text-embedding-3-small`, stored in a local ChromaDB collection and exported
+   to `index/hr_handbook.json`.
 
-2. **Retrieve** — The user's question is embedded with the same model. ChromaDB
-   returns the 5 nearest chunks by cosine distance.
+2. **Retrieve** — The user's question is embedded with the same model. The server
+   ranks every chunk in the JSON index by squared L2 distance (for OpenAI's
+   unit-length vectors this orders them exactly as cosine similarity) and
+   keeps the 5 nearest.
 
 3. **Generate** — The chunks are assembled into a `CONTEXT` block and sent,
    with a system prompt that requires grounded answers and source citations,
