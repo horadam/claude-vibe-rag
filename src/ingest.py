@@ -8,7 +8,14 @@ from pathlib import Path
 import tiktoken
 from openai import OpenAI
 
-import chromadb
+try:
+    import chromadb
+except ModuleNotFoundError as exc:
+    # Chroma is in the optional "ingest" group, so the deployed server stays small.
+    raise SystemExit(
+        "chromadb isn't installed. Run `uv sync --group ingest`, or "
+        "`uv run --group ingest python ingest_cli.py`."
+    ) from exc
 
 from src.config import (
     CHROMA_DIR,

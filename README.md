@@ -54,8 +54,11 @@ chunks and embeddings to `index/hr_handbook.json`, which the server searches.
 Safe to re-run: it clears the collection first.
 
 ```bash
-uv run python ingest_cli.py
+uv run --group ingest python ingest_cli.py
 ```
+
+Chroma is in the opt-in `ingest` dependency group, because the server doesn't
+need it; `uv sync --group ingest` installs it for good.
 
 ### 2. Start the server
 
@@ -134,8 +137,10 @@ embedding to [`index/hr_handbook.json`](index/hr_handbook.json), which is
 committed. At query time, [`src/retrieve.py`](src/retrieve.py) ranks those
 chunks with a plain-Python loop: no numpy and no new dependency. It uses the
 same squared-L2 distance Chroma reported, so results and eval numbers are
-unchanged. `chromadb` is now in the `ingest` dependency group: `uv sync`
-installs it locally by default, and the server never imports it.
+unchanged. `chromadb` is now in the opt-in `ingest` dependency group, so
+Vercel doesn't install it and the server never imports it. Vercel reported a
+283 MB bundle while Chroma was still installed; without it the bundle is small
+enough that no size warning appears.
 
 The other option was to keep Chroma and copy the index to `/tmp` on every
 cold start. It needed fewer code changes, but kept the large bundle and the
@@ -143,8 +148,8 @@ slow start.
 
 ### What's committed for the deploy
 
-- `index/hr_handbook.json`: rebuild it with `uv run python ingest_cli.py`,
-  or with `--export-only` to rewrite it from the existing Chroma collection
+- `index/hr_handbook.json`: rebuild it with
+  `uv run --group ingest python ingest_cli.py`, or add `--export-only` to rewrite it from the existing Chroma collection
   without new embedding calls.
 - Two sample eval runs in `evals/runs/`, shown read-only on `/evals`. Other
   runs stay gitignored.
@@ -160,6 +165,8 @@ pay for visitors' questions.
 ```bash
 npx vercel deploy --prod
 ```
+
+Live: https://rag-practice-kappa.vercel.app
 
 ---
 

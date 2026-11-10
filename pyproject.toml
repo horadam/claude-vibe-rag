@@ -12,12 +12,11 @@ dependencies = [
     "uvicorn>=0.32.0",
 ]
 
+# Chroma only builds the index (ingest_cli.py); the server searches the JSON
+# export. It's an opt-in group so Vercel doesn't install it:
+# `uv sync --group ingest`.
 [dependency-groups]
 ingest = [
     "chromadb>=0.5.0",
 ]
 
-# Chroma is only needed to build the index (ingest_cli.py); the server searches
-# the JSON export. Installed locally by default, left out where groups aren't.
-[tool.uv]
-default-groups = ["ingest"]

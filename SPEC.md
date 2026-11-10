@@ -159,7 +159,7 @@ Deliberately include:
 
 ## Definition of done
 
-1. `uv run python ingest_cli.py` ingests the corpus cleanly.
+1. `uv run --group ingest python ingest_cli.py` ingests the corpus cleanly.
 2. `uvicorn src.server:app --reload` boots the API.
 3. `curl -X POST localhost:8000/ask -H 'content-type: application/json' -d '{"question":"..."}'` returns a grounded answer with citations.
 4. `uv run python eval_cli.py` runs the eval set and prints a pass-rate summary.

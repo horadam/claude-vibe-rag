@@ -636,7 +636,8 @@ chunks, an exact search is 14 distance calculations.
 - `search()` sorts the chunks by `squared_l2()`, Chroma's default measure, so
   distances match earlier eval runs. This was checked against Chroma's own
   query results before Chroma was removed from the server.
-- `chromadb` moved to the `ingest` dependency group, and
+- `chromadb` moved to an opt-in `ingest` dependency group, so Vercel doesn't
+  install it (`uv sync --group ingest` does, locally), and
   [tests/test_retrieve.py](../tests/test_retrieve.py) checks that importing
   the server doesn't load it.
 
@@ -652,7 +653,7 @@ the index, and the distances match what it reported."
 - *Why squared L2, not cosine?* For unit-length vectors they rank identically,
   and keeping Chroma's measure keeps old and new eval runs comparable.
 
-**Try it.** Run `uv run python ingest_cli.py --export-only`, then open the JSON
+**Try it.** Run `uv run --group ingest python ingest_cli.py --export-only`, then open the JSON
 file. How many numbers does each embedding have, and why does the file take
 about 440 KB?
 

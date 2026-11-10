@@ -294,7 +294,6 @@ wheels = [
 name = "claude-vibe-rag"
 version = "0.1.0"
 source = { virtual = "." }
-default-groups = ["ingest"]
 dependencies = [
     { name = "anthropic" },
     { name = "fastapi" },
