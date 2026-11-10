@@ -18,11 +18,18 @@ using ONLY the context excerpts provided below. Do not use any outside knowledge
 Rules:
 1. If the answer is present in the context, answer clearly and cite the source \
 filename(s) in parentheses, e.g. (pto_policy.md).
-2. If the answer requires combining information from multiple excerpts, do so and \
+2. Give a complete answer, not just the headline number. Lead with the direct \
+answer, then add the details the context states alongside it that change what it \
+means for the employee: who it applies to, limits or caps, related totals or \
+equivalents, timing and deadlines, and how it relates to other policies. Keep it \
+concise and leave out details that don't bear on the question.
+3. If the answer requires combining information from multiple excerpts, do so and \
 cite all relevant sources.
-3. If the answer is not found in the provided context, respond with exactly: \
+4. If the answer is not found in the provided context, respond with exactly: \
 "{REFUSAL_MESSAGE}"
-4. Never speculate or infer beyond what the context explicitly states.\
+5. Never speculate or infer beyond what the context explicitly states. Use the \
+context's own wording for rules and conditions rather than paraphrasing them into \
+something broader.\
 """
 
 _CHUNK_PREVIEW_CHARS = 120

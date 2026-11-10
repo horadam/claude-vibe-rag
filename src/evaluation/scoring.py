@@ -15,9 +15,14 @@ _CHAR_MAP = str.maketrans(
         "’": "'",  # right single quote / apostrophe
         "“": '"',
         "”": '"',
+        "\u2010": "-",  # hyphen
+        "\u2011": "-",  # non-breaking hyphen (GPT writes "company-issued" with it)
+        "\u2012": "-",  # figure dash
         "–": "-",  # en dash
         "—": "-",  # em dash
         " ": " ",  # non-breaking space
+        "\u2212": "-",  # minus sign
+        "\u202f": " ",  # narrow non-breaking space
     }
 )
 _MARKDOWN_EMPHASIS = re.compile(r"[*_`]+")
