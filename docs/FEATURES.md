@@ -526,11 +526,12 @@ key' reads as exactly that."
 
 ## Part 3 — Choosing the model provider (2026-11-06)
 
-### 12. Anthropic or OpenAI, from `.env` or the UI
+### 12. OpenAI or Anthropic, from `.env` or the UI
 
-**What it is.** Answers and eval grading can run on Anthropic (Claude) or
-OpenAI (GPT):
-- `LLM_PROVIDER` and `JUDGE_PROVIDER` in `.env` set the default.
+**What it is.** Answers and eval grading can run on OpenAI (GPT) or
+Anthropic (Claude):
+- `LLM_PROVIDER` and `JUDGE_PROVIDER` in `.env` set the default, which is
+  OpenAI because search needs an OpenAI key anyway.
 - The chat page's **Model settings** switches it per browser tab and accepts
   the user's own keys.
 
@@ -540,7 +541,7 @@ and Anthropic has no embeddings API, so the OpenAI key is needed in both modes.
 **Why it matters.** The project shouldn't stop working because one provider
 account has no credit. It also makes a portfolio point: the RAG pipeline and
 the evals don't depend on the vendor. You can run the same eval with
-`LLM_PROVIDER=openai` and compare runs, because each run record stores the
+`LLM_PROVIDER=anthropic` and compare runs, because each run record stores the
 provider and model.
 
 **How it works.**
@@ -598,8 +599,8 @@ one ran, so you can compare Claude and GPT on the same questions."
   embedded with the same model as the index. Switching embeddings would mean
   a second index and new retrieval numbers.
 
-**Try it.** Run `uv run python eval_cli.py --judge --label openai` with
-`LLM_PROVIDER=openai`, then later run the same command on Anthropic with
+**Try it.** Run `uv run python eval_cli.py --judge --label openai` (the
+default provider), then later run the same command with `LLM_PROVIDER=anthropic` and
 `--compare latest`. Which metrics move? Retrieval shouldn't, because both
 runs use the same embeddings. Then explain why.
 
