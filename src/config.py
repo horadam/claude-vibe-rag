@@ -13,7 +13,7 @@ load_dotenv()
 # OpenAI, because the index is built from OpenAI vectors (Anthropic has no
 # embeddings API).
 Provider = Literal["anthropic", "openai"]
-PROVIDERS: tuple[Provider, ...] = ("anthropic", "openai")
+PROVIDERS: tuple[Provider, ...] = ("openai", "anthropic")
 API_KEY_ENV: dict[Provider, str] = {
     "anthropic": "ANTHROPIC_API_KEY",
     "openai": "OPENAI_API_KEY",
@@ -28,7 +28,7 @@ def _provider_env(name: str, default: str) -> Provider:
     return value  # type: ignore[return-value]
 
 
-LLM_PROVIDER: Provider = _provider_env("LLM_PROVIDER", "anthropic")
+LLM_PROVIDER: Provider = _provider_env("LLM_PROVIDER", "openai")
 JUDGE_PROVIDER: Provider = _provider_env("JUDGE_PROVIDER", LLM_PROVIDER)
 
 # Models

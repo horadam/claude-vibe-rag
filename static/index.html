@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
   <link rel="stylesheet" href="/static/app.css" />
   <script src="/static/marked.min.js"></script>
   <script src="/static/purify.min.js"></script>
@@ -547,7 +548,7 @@
   // survive a reload but not closing the tab. Keys go to the server as
   // headers on each /ask and nowhere else.
   const STORE_KEY = 'northwind.modelSettings';
-  const PROVIDER_LABEL = { anthropic: 'Anthropic', openai: 'OpenAI' };
+  const PROVIDER_LABEL = { openai: 'OpenAI', anthropic: 'Anthropic' };
   const settingsPanel = document.getElementById('settings');
   const modelBtn = document.getElementById('model-btn');
   const openaiInput = document.getElementById('openai-key');
@@ -674,7 +675,7 @@
     } catch (err) {
       console.warn('Could not load /api/config; using the server default provider.', err);
     }
-    settings.provider = settings.provider || serverConfig?.default_provider || 'anthropic';
+    settings.provider = settings.provider || serverConfig?.default_provider || 'openai';
     renderSettings();
   }
 

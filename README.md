@@ -35,12 +35,12 @@ ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 **Choosing a provider.** Search always embeds with OpenAI, so an OpenAI key is
-always needed. Answers and the eval judge use Anthropic by default; set
-`LLM_PROVIDER=openai` to run everything on OpenAI with a single key. Model
+always needed. Answers and the eval judge use OpenAI by default, so one key
+runs everything; set `LLM_PROVIDER=anthropic` to answer and grade with Claude. Model
 names and `JUDGE_PROVIDER` can be overridden too; see `.env.example`.
 
-In the chat UI, **Model settings** (top right) switches between Anthropic and
-OpenAI per tab and accepts your own keys. A key typed there is optional when
+In the chat UI, **Model settings** (top right) switches between OpenAI and
+Anthropic per tab and accepts your own keys. A key typed there is optional when
 the server's `.env` already has one. It's kept in the tab's session storage
 and sent with each question as a header. The server uses it for that request
 only and never saves or logs it.
@@ -220,8 +220,8 @@ chroma_db/       Local Chroma store used to build the index (gitignored)
 
 3. **Generate** — The chunks are assembled into a `CONTEXT` block and sent,
    with a system prompt that requires grounded answers and source citations,
-   to `claude-sonnet-4-6` or (with `LLM_PROVIDER=openai`, or chosen in the UI)
-   `gpt-5-mini`.
+   to `gpt-5-mini` or (with `LLM_PROVIDER=anthropic`, or chosen in the UI)
+   `claude-sonnet-4-6`.
 
 4. **UI** — A single-page chat served by FastAPI. Answers render as markdown,
    and each cited filename becomes a link to the exact passage on a rendered
